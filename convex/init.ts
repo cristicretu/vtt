@@ -11,6 +11,7 @@ import schema, {
 } from "@cvx/schema";
 import { internal } from "@cvx/_generated/api";
 import { stripe } from "@cvx/stripe";
+import { STRIPE_SECRET_KEY } from "@cvx/env";
 
 const seedProducts = [
   {
@@ -59,6 +60,14 @@ export const insertSeedPlan = internalMutation({
 });
 
 export default internalAction(async (ctx) => {
+  /**
+   * Skip Stripe initialization if no API key is configured (local dev)
+   */
+  if (!STRIPE_SECRET_KEY) {
+    console.info("⚠️  No Stripe API key configured - skipping Stripe initialization");
+    return;
+  }
+
   /**
    * Stripe Products.
    */
