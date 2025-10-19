@@ -52,7 +52,7 @@ Notă: Pentru evaluarea din Lab 1, “predicția AI” este tratată ca o consta
 - **Date**: Antrenat pe ~680.000 ore de perechi audio-text multilingve.
 - **Algoritmi**: Arhitectură encoder–decoder Transformer; suportă ASR, identificare limbă și traducere.
 - **Performanță**: WER competitiv, robust la accente și zgomot.
-- **Tehnologii**: `openai-whisper`, `torch`, `torchaudio`. Repo disponibil pe GitHub.
+- **Tehnologii**: `openai-whisper`, `torch`, `torchaudio`. Repo disponibil pe GitHub(https://github.com/openai/whisper).
 - **Relevanță**: Bază solidă multilingvă, folosită în prezent pentru transcriere locală fără costuri.
 
 #### B) MultiMed — Procesare medicală multilingvă a vorbirii (open-source)
