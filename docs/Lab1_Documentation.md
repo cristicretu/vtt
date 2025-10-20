@@ -90,3 +90,4 @@ Notă: Pentru evaluarea din Lab 1, “predicția AI” este tratată ca o consta
 - Proiectul și dataset-urile MultiMed: [MultiMed pe GitHub](https://github.com/leduckhai/MultiMed)
 - Rezumat Meta MMS: [Meta MMS summary](https://www.infoq.com/news/2023/06/meta-mms-speech-ai/)
 - Modele și prețuri Deepgram: [Deepgram pricing](https://deepgram.com/pricing)
+- Whisper-LM: Improving ASR Models with Language Models for Low-Resource Languages: (https://arxiv.org/html/2503.23542v1)
