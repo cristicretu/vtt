@@ -1,6 +1,6 @@
 import { Settings, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useSignOut } from "@/utils/misc";
+import { useSignOut } from "@/lib/utils";
 import { ThemeSwitcher } from "@/components/ui/theme-switcher";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import {

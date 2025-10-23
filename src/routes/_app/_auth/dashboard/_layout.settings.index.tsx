@@ -11,7 +11,7 @@ import { useRef } from "react";
 import { useForm } from "@tanstack/react-form";
 import { zodValidator } from "@tanstack/zod-form-adapter";
 import * as validators from "@/lib/validators";
-import { useSignOut } from "@/utils/misc";
+import { useSignOut } from "@/lib/utils";
 import {
 	Card,
 	CardContent,

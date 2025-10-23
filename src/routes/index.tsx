@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Logo } from "../components/ui/logo";
-import { cn } from "@/utils/misc";
+import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button-util";
 import { Loader2, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
