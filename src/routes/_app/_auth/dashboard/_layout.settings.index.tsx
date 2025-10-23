@@ -10,7 +10,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRef } from "react";
 import { useForm } from "@tanstack/react-form";
 import { zodValidator } from "@tanstack/zod-form-adapter";
-import * as validators from "@/utils/validators";
+import * as validators from "@/lib/validators";
 import { useSignOut } from "@/utils/misc";
 import {
 	Card,
