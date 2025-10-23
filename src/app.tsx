@@ -12,30 +12,30 @@ const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 
 const convexQueryClient = new ConvexQueryClient(convex);
 const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      queryKeyHashFn: convexQueryClient.hashFn(),
-      queryFn: convexQueryClient.queryFn(),
-    },
-  },
+	defaultOptions: {
+		queries: {
+			queryKeyHashFn: convexQueryClient.hashFn(),
+			queryFn: convexQueryClient.queryFn(),
+		},
+	},
 });
 
 convexQueryClient.connect(queryClient);
 
 function InnerApp() {
-  return <RouterProvider router={router} context={{ queryClient }} />;
+	return <RouterProvider router={router} context={{ queryClient }} />;
 }
 
 const helmetContext = {};
 
 export default function App() {
-  return (
-    <HelmetProvider context={helmetContext}>
-      <ConvexAuthProvider client={convex}>
-        <QueryClientProvider client={queryClient}>
-          <InnerApp />
-        </QueryClientProvider>
-      </ConvexAuthProvider>
-    </HelmetProvider>
-  );
+	return (
+		<HelmetProvider context={helmetContext}>
+			<ConvexAuthProvider client={convex}>
+				<QueryClientProvider client={queryClient}>
+					<InnerApp />
+				</QueryClientProvider>
+			</ConvexAuthProvider>
+		</HelmetProvider>
+	);
 }
