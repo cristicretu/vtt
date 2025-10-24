@@ -39,7 +39,7 @@ export default function Dashboard() {
 	};
 
 	return (
-		<div className="flex h-full flex-col">
+		<div className="flex h-full w-full flex-col">
 			{/* Main Content */}
 			<main className="flex-1 overflow-auto p-6">
 				<div className="mx-auto max-w-2xl">

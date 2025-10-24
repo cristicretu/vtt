@@ -1,7 +1,7 @@
-import { Link, useRouter } from "@tanstack/react-router";
-import { is } from "date-fns/locale";
-import { ChevronsLeft, Plus, Search, User as UserIcon } from "lucide-react";
-import { useState } from "react";
+"use client";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { ChevronsLeft, Home, Plus, Search, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,94 +14,180 @@ import {
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
-	SidebarRail,
+	SidebarTrigger,
+	useSidebar,
 } from "@/components/ui/sidebar";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 import type { User } from "~/types";
 import { patientsData } from "~/types";
 import UserItem from "./user-item";
 
-const AppSidebar = ({ user }: { user: User }) => {
-	const [searchQuery, setSearchQuery] = useState("");
-	const router = useRouter();
-	const currentPath = router.state.location.pathname;
-	const { isTouchDevice } = useIsMobile();
+interface AppSidebarProps {
+	user: User;
+}
 
-	const filteredPatients = patientsData.filter((patient) =>
-		patient.fullName.toLowerCase().includes(searchQuery.toLowerCase()),
-	);
+export function AppSidebar({ user }: AppSidebarProps) {
+	const { toggleSidebar, state, isMobile, openMobile } = useSidebar();
+	const routerState = useRouterState();
+	const currentPath = routerState.location.pathname;
+	const [isSearching, setIsSearching] = useState(false);
+	const [searchQuery, setSearchQuery] = useState("");
+	const searchInputRef = useRef<HTMLInputElement>(null);
+
+	// Determine if trigger should be shown
+	const shouldShowTrigger = isMobile ? !openMobile : state === "collapsed";
+
+	// Focus input when search mode is activated
+	useEffect(() => {
+		if (isSearching && searchInputRef.current) {
+			searchInputRef.current.focus();
+		}
+	}, [isSearching]);
+
+	// Fuzzy search filter
+	const filteredPatients = useMemo(() => {
+		if (!searchQuery.trim()) {
+			return patientsData;
+		}
+
+		const query = searchQuery.toLowerCase();
+		return patientsData.filter((patient) => {
+			const name = patient.fullName.toLowerCase();
+			// Simple fuzzy matching: check if all characters in query appear in order
+			let queryIndex = 0;
+			for (let i = 0; i < name.length && queryIndex < query.length; i++) {
+				if (name[i] === query[queryIndex]) {
+					queryIndex++;
+				}
+			}
+			return queryIndex === query.length;
+		});
+	}, [searchQuery]);
+
+	const handleSearchClick = () => {
+		setIsSearching(true);
+	};
+
+	const handleSearchClose = () => {
+		setIsSearching(false);
+		setSearchQuery("");
+	};
 
 	return (
-		<Sidebar className="group group/sidebar">
-			<SidebarHeader className="flex flex-row items-center justify-between border-b p-2">
-				<UserItem user={user} />
-				<div className="flex flex-row items-center justify-end">
-					<Button
-						variant="ghost"
-						size="icon"
-						className={
-							!isTouchDevice
-								? "opacity-0 transition group-hover/sidebar:opacity-100"
-								: "opacity-100"
-						}
-					>
-						<ChevronsLeft className="h-4 w-4 shrink-0 opacity-50" />
-					</Button>
-					<Button variant="ghost" size="icon">
-						<Plus className="h-4 w-4 shrink-0 opacity-50" />
-					</Button>
-				</div>
-			</SidebarHeader>
-
-			<SidebarContent className="px-2 pt-4">
-				<SidebarGroup>
-					<SidebarGroupLabel className="font-light text-muted-foreground text-sm">
-						Patients
-					</SidebarGroupLabel>
-					<SidebarGroupContent>
-						<div className="mb-2 px-2">
-							<div className="relative">
-								<Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
-								<Input
-									placeholder="Search patients..."
-									value={searchQuery}
-									onChange={(e) => setSearchQuery(e.target.value)}
-									className="h-9 pl-9"
-								/>
-							</div>
+		<>
+			{shouldShowTrigger && <SidebarTrigger />}
+			<Sidebar collapsible="offcanvas" className="group group/sidebar">
+				<SidebarHeader className="border-b">
+					<div className="flex items-center justify-between gap-2 px-2 py-1">
+						<div className="min-w-0 flex-1">
+							<UserItem user={user} />
 						</div>
-						<SidebarMenu>
-							{filteredPatients.map((patient) => (
-								<SidebarMenuItem key={patient.id}>
-									<SidebarMenuButton
-										asChild
-										tooltip={patient.fullName}
-										isActive={currentPath === `/patients/${patient.id}`}
-									>
-										<Link
-											to="/patients/$patientId"
-											params={{ patientId: patient.id }}
-											className="flex items-center gap-3"
-										>
-											<UserIcon className="h-4 w-4 shrink-0" />
-											<span className="truncate">{patient.fullName}</span>
+						<div className="flex shrink-0 items-center gap-1">
+							<Button
+								variant="ghost"
+								size="icon"
+								className={cn(
+									"h-8 w-8 opacity-0 transition group-hover/sidebar:opacity-100",
+									isMobile ? "opacity-100" : "opacity-0 transition group-hover/sidebar:opacity-100",
+								)}
+								onClick={toggleSidebar}
+								title="Collapse sidebar"
+							>
+								<ChevronsLeft />
+							</Button>
+							<Button
+								variant="ghost"
+								size="icon"
+								className="h-8 w-8"
+								asChild
+								title="Add new patient"
+							>
+								<Link to="/dashboard">
+									<Plus />
+								</Link>
+							</Button>
+						</div>
+					</div>
+				</SidebarHeader>
+
+				<SidebarContent>
+					<SidebarGroup>
+						<SidebarGroupContent>
+							<SidebarMenu>
+								<SidebarMenuItem>
+									<SidebarMenuButton asChild isActive={currentPath === "/dashboard"} tooltip="Home">
+										<Link to="/dashboard">
+											<Home className="h-4 w-4" />
+											<span>Home</span>
 										</Link>
 									</SidebarMenuButton>
 								</SidebarMenuItem>
-							))}
-							{filteredPatients.length === 0 && (
-								<div className="px-4 py-6 text-center text-muted-foreground text-sm">
-									No patients found
-								</div>
-							)}
-						</SidebarMenu>
-					</SidebarGroupContent>
-				</SidebarGroup>
-			</SidebarContent>
+								<SidebarMenuItem>
+									{isSearching ? (
+										<div className="relative flex items-center gap-2 px-2">
+											<Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+											<Input
+												ref={searchInputRef}
+												type="text"
+												placeholder="Search patients..."
+												value={searchQuery}
+												onChange={(e) => setSearchQuery(e.target.value)}
+												className="h-8 border-0 bg-transparent px-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+												onKeyDown={(e) => {
+													if (e.key === "Escape") {
+														handleSearchClose();
+													}
+												}}
+											/>
+											<Button
+												variant="ghost"
+												size="icon"
+												className="h-6 w-6 shrink-0"
+												onClick={handleSearchClose}
+											>
+												<X className="h-3 w-3" />
+											</Button>
+										</div>
+									) : (
+										<SidebarMenuButton tooltip="Search" onClick={handleSearchClick}>
+											<Search className="h-4 w-4" />
+											<span>Search</span>
+										</SidebarMenuButton>
+									)}
+								</SidebarMenuItem>
+							</SidebarMenu>
+						</SidebarGroupContent>
+					</SidebarGroup>
 
-			<SidebarRail />
-		</Sidebar>
+					<SidebarGroup>
+						<SidebarGroupLabel>Patients</SidebarGroupLabel>
+						<SidebarGroupContent>
+							<SidebarMenu>
+								{filteredPatients.map((patient) => {
+									const isActive = currentPath === `/dashboard/${patient.id}`;
+									return (
+										<SidebarMenuItem key={patient.id}>
+											<SidebarMenuButton asChild isActive={isActive} tooltip={patient.fullName}>
+												<Link to="/dashboard/$patientId" params={{ patientId: patient.id }}>
+													<span className="rounded-md border p-1 font-medium text-xs">
+														{`${patient.fullName.charAt(0).toUpperCase()}.${patient.fullName.split(" ")[1].charAt(0).toUpperCase()}.`}
+													</span>
+													<span className="truncate">{patient.fullName}</span>
+												</Link>
+											</SidebarMenuButton>
+										</SidebarMenuItem>
+									);
+								})}
+								{filteredPatients.length === 0 && (
+									<div className="px-2 py-4 text-center text-muted-foreground text-sm">
+										No patients found
+									</div>
+								)}
+							</SidebarMenu>
+						</SidebarGroupContent>
+					</SidebarGroup>
+				</SidebarContent>
+			</Sidebar>
+		</>
 	);
-};
-
-export default AppSidebar;
+}

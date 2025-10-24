@@ -3,6 +3,8 @@ import { Calendar, FileText, Mail, MapPin, Phone, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { patientsData } from "~/types";
 
 export const Route = createFileRoute("/_app/_auth/_layout/dashboard/$patientId")({
@@ -29,27 +31,31 @@ function PatientPage() {
 	const age = new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear();
 
 	return (
-		<div className="flex h-full flex-col">
+		<div className="flex h-full w-full flex-col">
 			{/* Header */}
-			<div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-				<div className="flex h-16 items-center justify-between px-6">
-					<div className="flex items-center gap-3">
-						<div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-lime-400 via-cyan-300 to-blue-500">
-							<User className="h-5 w-5 text-white" />
+			<header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+				<div className="flex h-16 items-center gap-4 px-4">
+					<SidebarTrigger />
+					<Separator orientation="vertical" className="h-6" />
+					<div className="flex flex-1 items-center justify-between">
+						<div className="flex items-center gap-3">
+							<div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-lime-400 via-cyan-300 to-blue-500">
+								<User className="h-5 w-5 text-white" />
+							</div>
+							<div>
+								<h1 className="font-semibold text-lg">{patient.fullName}</h1>
+								<p className="text-muted-foreground text-sm">Patient ID: {patient.id}</p>
+							</div>
 						</div>
-						<div>
-							<h1 className="font-semibold text-lg">{patient.fullName}</h1>
-							<p className="text-muted-foreground text-sm">Patient ID: {patient.id}</p>
+						<div className="flex items-center gap-2">
+							<Badge variant="outline" className="gap-1">
+								<Calendar className="h-3 w-3" />
+								{age} years old
+							</Badge>
 						</div>
-					</div>
-					<div className="flex items-center gap-2">
-						<Badge variant="outline" className="gap-1">
-							<Calendar className="h-3 w-3" />
-							{age} years old
-						</Badge>
 					</div>
 				</div>
-			</div>
+			</header>
 
 			{/* Content */}
 			<div className="flex-1 overflow-auto p-6">

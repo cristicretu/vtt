@@ -7,7 +7,6 @@ import { HelmetProvider } from "react-helmet-async";
 import { router } from "@/router";
 import "@/i18n";
 import { ThemeProvider } from "@/components/providers/theme-provider";
-import { SidebarProvider } from "./components/ui/sidebar";
 
 // Convex client
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
@@ -27,9 +26,7 @@ convexQueryClient.connect(queryClient);
 function InnerApp() {
 	return (
 		<ThemeProvider>
-			<SidebarProvider>
-				<RouterProvider router={router} context={{ queryClient }} />
-			</SidebarProvider>
+			<RouterProvider router={router} context={{ queryClient }} />
 		</ThemeProvider>
 	);
 }

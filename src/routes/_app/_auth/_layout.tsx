@@ -3,7 +3,7 @@ import { api } from "@cvx/_generated/api";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import AppSidebar from "./-components/app-sidebar";
+import { AppSidebar } from "./-components/app-sidebar";
 
 export const Route = createFileRoute("/_app/_auth/_layout")({
 	component: Layout,
@@ -15,13 +15,13 @@ function Layout() {
 		return null;
 	}
 	return (
-		<SidebarProvider>
-			<div className="flex min-h-screen w-full">
-				<AppSidebar user={user} />
-				<SidebarInset>
+		<SidebarProvider defaultOpen={true}>
+			<AppSidebar user={user} />
+			<SidebarInset>
+				<div className="flex h-full w-full">
 					<Outlet />
-				</SidebarInset>
-			</div>
+				</div>
+			</SidebarInset>
 		</SidebarProvider>
 	);
 }
