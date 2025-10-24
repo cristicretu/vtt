@@ -1,6 +1,6 @@
 import { AUTH_EMAIL, AUTH_RESEND_KEY } from "@cvx/env";
-import { ERRORS } from "~/errors";
 import { z } from "zod";
+import { ERRORS } from "~/errors";
 
 const ResendSuccessSchema = z.object({
 	id: z.string(),
@@ -48,14 +48,12 @@ export async function sendEmail(options: SendEmailOptions) {
 
 	if (response.ok && parsedData.success) {
 		return { status: "success", data: parsedData } as const;
-	} else {
-		const parsedErrorResult = ResendErrorSchema.safeParse(data);
-		if (parsedErrorResult.success) {
-			console.error(parsedErrorResult.data);
-			throw new Error(ERRORS.AUTH_EMAIL_NOT_SENT);
-		} else {
-			console.error(data);
-			throw new Error(ERRORS.AUTH_EMAIL_NOT_SENT);
-		}
 	}
+	const parsedErrorResult = ResendErrorSchema.safeParse(data);
+	if (parsedErrorResult.success) {
+		console.error(parsedErrorResult.data);
+		throw new Error(ERRORS.AUTH_EMAIL_NOT_SENT);
+	}
+	console.error(data);
+	throw new Error(ERRORS.AUTH_EMAIL_NOT_SENT);
 }

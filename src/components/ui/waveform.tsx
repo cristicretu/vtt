@@ -1,11 +1,4 @@
-import {
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-	type HTMLAttributes,
-} from "react";
+import { type HTMLAttributes, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -68,9 +61,7 @@ export const Waveform = ({
 			ctx.clearRect(0, 0, rect.width, rect.height);
 
 			const computedBarColor =
-				barColor ||
-				getComputedStyle(canvas).getPropertyValue("--foreground") ||
-				"#000";
+				barColor || getComputedStyle(canvas).getPropertyValue("--foreground") || "#000";
 
 			const barCount = Math.floor(rect.width / (barWidth + barGap));
 			const centerY = rect.height / 2;
@@ -142,19 +133,12 @@ export const Waveform = ({
 			style={{ height: heightStyle }}
 			{...props}
 		>
-			<canvas
-				className="block h-full w-full"
-				onClick={handleClick}
-				ref={canvasRef}
-			/>
+			<canvas className="block h-full w-full" onClick={handleClick} ref={canvasRef} />
 		</div>
 	);
 };
 
-export type ScrollingWaveformProps = Omit<
-	WaveformProps,
-	"data" | "onBarClick"
-> & {
+export type ScrollingWaveformProps = Omit<WaveformProps, "data" | "onBarClick"> & {
 	speed?: number;
 	barCount?: number;
 	data?: number[];
@@ -232,27 +216,21 @@ export const ScrollingWaveform = ({
 		if (!ctx) return;
 
 		const animate = (currentTime: number) => {
-			const deltaTime = lastTimeRef.current
-				? (currentTime - lastTimeRef.current) / 1000
-				: 0;
+			const deltaTime = lastTimeRef.current ? (currentTime - lastTimeRef.current) / 1000 : 0;
 			lastTimeRef.current = currentTime;
 
 			const rect = canvas.getBoundingClientRect();
 			ctx.clearRect(0, 0, rect.width, rect.height);
 
 			const computedBarColor =
-				barColor ||
-				getComputedStyle(canvas).getPropertyValue("--foreground") ||
-				"#000";
+				barColor || getComputedStyle(canvas).getPropertyValue("--foreground") || "#000";
 
 			const step = barWidth + barGap;
 			for (let i = 0; i < barsRef.current.length; i++) {
 				barsRef.current[i].x -= speed * deltaTime;
 			}
 
-			barsRef.current = barsRef.current.filter(
-				(bar) => bar.x + barWidth > -step,
-			);
+			barsRef.current = barsRef.current.filter((bar) => bar.x + barWidth > -step);
 
 			while (
 				barsRef.current.length === 0 ||
@@ -275,10 +253,7 @@ export const ScrollingWaveform = ({
 					const wave1 = Math.sin(uniqueIndex * 0.1) * 0.2;
 					const wave2 = Math.cos(uniqueIndex * 0.05) * 0.15;
 					const randomComponent = seededRandom(uniqueIndex) * 0.4;
-					newHeight = Math.max(
-						0.1,
-						Math.min(0.9, 0.3 + wave1 + wave2 + randomComponent),
-					);
+					newHeight = Math.max(0.1, Math.min(0.9, 0.3 + wave1 + wave2 + randomComponent));
 				}
 
 				barsRef.current.push({
@@ -334,17 +309,7 @@ export const ScrollingWaveform = ({
 				cancelAnimationFrame(animationRef.current);
 			}
 		};
-	}, [
-		speed,
-		barCount,
-		barWidth,
-		barGap,
-		barRadius,
-		barColor,
-		fadeEdges,
-		fadeWidth,
-		data,
-	]);
+	}, [speed, barCount, barWidth, barGap, barRadius, barColor, fadeEdges, fadeWidth, data]);
 
 	return (
 		<div
@@ -384,9 +349,7 @@ export const AudioScrubber = ({
 	const containerRef = useRef<HTMLDivElement>(null);
 
 	const waveformData =
-		data.length > 0
-			? data
-			: Array.from({ length: 100 }, () => 0.2 + Math.random() * 0.6);
+		data.length > 0 ? data : Array.from({ length: 100 }, () => 0.2 + Math.random() * 0.6);
 
 	useEffect(() => {
 		if (!isDragging && duration > 0) {
@@ -462,18 +425,18 @@ export const AudioScrubber = ({
 			/>
 
 			<div
-				className="bg-primary/20 pointer-events-none absolute inset-y-0 left-0"
+				className="pointer-events-none absolute inset-y-0 left-0 bg-primary/20"
 				style={{ width: `${localProgress * 100}%` }}
 			/>
 
 			<div
-				className="bg-primary pointer-events-none absolute top-0 bottom-0 w-0.5"
+				className="pointer-events-none absolute top-0 bottom-0 w-0.5 bg-primary"
 				style={{ left: `${localProgress * 100}%` }}
 			/>
 
 			{showHandle && (
 				<div
-					className="border-background bg-primary pointer-events-none absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 shadow-lg transition-transform hover:scale-110"
+					className="-translate-x-1/2 -translate-y-1/2 pointer-events-none absolute top-1/2 h-4 w-4 rounded-full border-2 border-background bg-primary shadow-lg transition-transform hover:scale-110"
 					style={{ left: `${localProgress * 100}%` }}
 				/>
 			)}
@@ -515,10 +478,7 @@ export const MicrophoneWaveform = ({
 
 			const animateProcessing = () => {
 				time += 0.03;
-				transitionProgressRef.current = Math.min(
-					1,
-					transitionProgressRef.current + 0.02,
-				);
+				transitionProgressRef.current = Math.min(1, transitionProgressRef.current + 0.02);
 
 				const processingData = [];
 				const barCount = 45;
@@ -534,13 +494,8 @@ export const MicrophoneWaveform = ({
 					const processingValue = (0.2 + combinedWave) * centerWeight;
 
 					let finalValue = processingValue;
-					if (
-						lastActiveDataRef.current.length > 0 &&
-						transitionProgressRef.current < 1
-					) {
-						const lastDataIndex = Math.floor(
-							(i / barCount) * lastActiveDataRef.current.length,
-						);
+					if (lastActiveDataRef.current.length > 0 && transitionProgressRef.current < 1) {
+						const lastDataIndex = Math.floor((i / barCount) * lastActiveDataRef.current.length);
 						const lastValue = lastActiveDataRef.current[lastDataIndex] || 0;
 						finalValue =
 							lastValue * (1 - transitionProgressRef.current) +
@@ -551,8 +506,7 @@ export const MicrophoneWaveform = ({
 				}
 
 				setData(processingData);
-				processingAnimationRef.current =
-					requestAnimationFrame(animateProcessing);
+				processingAnimationRef.current = requestAnimationFrame(animateProcessing);
 			};
 
 			animateProcessing();
@@ -562,7 +516,8 @@ export const MicrophoneWaveform = ({
 					cancelAnimationFrame(processingAnimationRef.current);
 				}
 			};
-		} else if (!active && !processing) {
+		}
+		if (!active && !processing) {
 			if (data.length > 0) {
 				let fadeProgress = 0;
 				const fadeToIdle = () => {
@@ -586,10 +541,7 @@ export const MicrophoneWaveform = ({
 			if (streamRef.current) {
 				streamRef.current.getTracks().forEach((track) => track.stop());
 			}
-			if (
-				audioContextRef.current &&
-				audioContextRef.current.state !== "closed"
-			) {
+			if (audioContextRef.current && audioContextRef.current.state !== "closed") {
 				audioContextRef.current.close();
 			}
 			if (animationIdRef.current) {
@@ -607,8 +559,7 @@ export const MicrophoneWaveform = ({
 
 				const audioContext = new (
 					window.AudioContext ||
-					(window as unknown as { webkitAudioContext: typeof AudioContext })
-						.webkitAudioContext
+					(window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
 				)();
 				const analyser = audioContext.createAnalyser();
 				analyser.fftSize = fftSize;
@@ -662,10 +613,7 @@ export const MicrophoneWaveform = ({
 			if (streamRef.current) {
 				streamRef.current.getTracks().forEach((track) => track.stop());
 			}
-			if (
-				audioContextRef.current &&
-				audioContextRef.current.state !== "closed"
-			) {
+			if (audioContextRef.current && audioContextRef.current.state !== "closed") {
 				audioContextRef.current.close();
 			}
 			if (animationIdRef.current) {
@@ -682,11 +630,7 @@ export type StaticWaveformProps = WaveformProps & {
 	seed?: number;
 };
 
-export const StaticWaveform = ({
-	bars = 40,
-	seed = 42,
-	...props
-}: StaticWaveformProps) => {
+export const StaticWaveform = ({ bars = 40, seed = 42, ...props }: StaticWaveformProps) => {
 	const data = useMemo(() => {
 		const random = (seedValue: number) => {
 			const x = Math.sin(seedValue) * 10000;
@@ -699,10 +643,7 @@ export const StaticWaveform = ({
 	return <Waveform data={data} {...props} />;
 };
 
-export type LiveMicrophoneWaveformProps = Omit<
-	ScrollingWaveformProps,
-	"barCount"
-> & {
+export type LiveMicrophoneWaveformProps = Omit<ScrollingWaveformProps, "barCount"> & {
 	active?: boolean;
 	fftSize?: number;
 	smoothingTimeConstant?: number;
@@ -795,10 +736,7 @@ export const LiveMicrophoneWaveform = ({
 
 	useEffect(() => {
 		if (!active) {
-			if (
-				mediaRecorderRef.current &&
-				mediaRecorderRef.current.state !== "inactive"
-			) {
+			if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
 				mediaRecorderRef.current.stop();
 			}
 			if (streamRef.current) {
@@ -829,8 +767,7 @@ export const LiveMicrophoneWaveform = ({
 
 				const audioContext = new (
 					window.AudioContext ||
-					(window as unknown as { webkitAudioContext: typeof AudioContext })
-						.webkitAudioContext
+					(window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
 				)();
 				const analyser = audioContext.createAnalyser();
 				analyser.fftSize = fftSize;
@@ -862,10 +799,7 @@ export const LiveMicrophoneWaveform = ({
 		setupMicrophone();
 
 		return () => {
-			if (
-				mediaRecorderRef.current &&
-				mediaRecorderRef.current.state !== "inactive"
-			) {
+			if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
 				mediaRecorderRef.current.stop();
 			}
 			if (streamRef.current) {
@@ -892,8 +826,7 @@ export const LiveMicrophoneWaveform = ({
 		try {
 			const arrayBuffer = await blob.arrayBuffer();
 			if (audioContextRef.current) {
-				const audioBuffer =
-					await audioContextRef.current.decodeAudioData(arrayBuffer);
+				const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
 				audioBufferRef.current = audioBuffer;
 			}
 		} catch (error) {
@@ -903,12 +836,7 @@ export const LiveMicrophoneWaveform = ({
 
 	const playScrubSound = useCallback(
 		(position: number, direction: number) => {
-			if (
-				!enableAudioPlayback ||
-				!audioBufferRef.current ||
-				!audioContextRef.current
-			)
-				return;
+			if (!enableAudioPlayback || !audioBufferRef.current || !audioContextRef.current) return;
 
 			if (scrubSourceRef.current) {
 				try {
@@ -921,9 +849,7 @@ export const LiveMicrophoneWaveform = ({
 
 			const speed = Math.abs(direction);
 			const playbackRate =
-				direction > 0
-					? Math.min(3, 1 + speed * 0.1)
-					: Math.max(-3, -1 - speed * 0.1);
+				direction > 0 ? Math.min(3, 1 + speed * 0.1) : Math.max(-3, -1 - speed * 0.1);
 
 			source.playbackRate.value = playbackRate;
 
@@ -934,10 +860,7 @@ export const LiveMicrophoneWaveform = ({
 			source.connect(filter);
 			filter.connect(audioContextRef.current.destination);
 
-			const startTime = Math.max(
-				0,
-				Math.min(position, audioBufferRef.current.duration - 0.1),
-			);
+			const startTime = Math.max(0, Math.min(position, audioBufferRef.current.duration - 0.1));
 			source.start(0, startTime, 0.1);
 			scrubSourceRef.current = source;
 		},
@@ -946,12 +869,7 @@ export const LiveMicrophoneWaveform = ({
 
 	const playFromPosition = useCallback(
 		(position: number) => {
-			if (
-				!enableAudioPlayback ||
-				!audioBufferRef.current ||
-				!audioContextRef.current
-			)
-				return;
+			if (!enableAudioPlayback || !audioBufferRef.current || !audioContextRef.current) return;
 
 			if (sourceNodeRef.current) {
 				try {
@@ -964,15 +882,11 @@ export const LiveMicrophoneWaveform = ({
 			source.playbackRate.value = playbackRate;
 			source.connect(audioContextRef.current.destination);
 
-			const startTime = Math.max(
-				0,
-				Math.min(position, audioBufferRef.current.duration),
-			);
+			const startTime = Math.max(0, Math.min(position, audioBufferRef.current.duration));
 			source.start(0, startTime);
 			sourceNodeRef.current = source;
 
-			playbackStartTimeRef.current =
-				audioContextRef.current.currentTime - startTime;
+			playbackStartTimeRef.current = audioContextRef.current.currentTime - startTime;
 			setPlaybackPosition(startTime);
 
 			source.onended = () => {
@@ -987,27 +901,18 @@ export const LiveMicrophoneWaveform = ({
 
 		let animationId: number;
 		const updatePlaybackVisual = () => {
-			if (
-				audioContextRef.current &&
-				sourceNodeRef.current &&
-				audioBufferRef.current
-			) {
-				const elapsed =
-					audioContextRef.current.currentTime - playbackStartTimeRef.current;
+			if (audioContextRef.current && sourceNodeRef.current && audioBufferRef.current) {
+				const elapsed = audioContextRef.current.currentTime - playbackStartTimeRef.current;
 				const currentPos = playbackPosition + elapsed * playbackRate;
 
 				if (currentPos < audioBufferRef.current.duration) {
 					const progressRatio = currentPos / audioBufferRef.current.duration;
-					const currentBarIndex = Math.floor(
-						progressRatio * historyRef.current.length,
-					);
+					const currentBarIndex = Math.floor(progressRatio * historyRef.current.length);
 					const step = barWidth + barGap;
 
-					const containerWidth =
-						containerRef.current?.getBoundingClientRect().width || 0;
+					const containerWidth = containerRef.current?.getBoundingClientRect().width || 0;
 					const viewBars = Math.floor(containerWidth / step);
-					const targetOffset =
-						-(currentBarIndex - (historyRef.current.length - viewBars)) * step;
+					const targetOffset = -(currentBarIndex - (historyRef.current.length - viewBars)) * step;
 					const clampedOffset = Math.max(
 						-(historyRef.current.length - viewBars) * step,
 						Math.min(0, targetOffset),
@@ -1018,8 +923,7 @@ export const LiveMicrophoneWaveform = ({
 				} else {
 					setPlaybackPosition(null);
 					const step = barWidth + barGap;
-					const containerWidth =
-						containerRef.current?.getBoundingClientRect().width || 0;
+					const containerWidth = containerRef.current?.getBoundingClientRect().width || 0;
 					const viewBars = Math.floor(containerWidth / step);
 					setDragOffset?.(-(historyRef.current.length - viewBars) * step);
 				}
@@ -1031,20 +935,12 @@ export const LiveMicrophoneWaveform = ({
 		return () => {
 			if (animationId) cancelAnimationFrame(animationId);
 		};
-	}, [
-		playbackPosition,
-		playbackRate,
-		barWidth,
-		barGap,
-		setDragOffset,
-		historyRef,
-	]);
+	}, [playbackPosition, playbackRate, barWidth, barGap, setDragOffset, historyRef]);
 
 	useEffect(() => {
 		const canvas = canvasRef.current;
 		if (!canvas) return;
-		if (!active && historyRef.current.length === 0 && playbackPosition === null)
-			return;
+		if (!active && historyRef.current.length === 0 && playbackPosition === null) return;
 
 		const ctx = canvas.getContext("2d");
 		if (!ctx) return;
@@ -1054,9 +950,7 @@ export const LiveMicrophoneWaveform = ({
 				lastUpdateRef.current = currentTime;
 
 				if (analyserRef.current) {
-					const dataArray = new Uint8Array(
-						analyserRef.current.frequencyBinCount,
-					);
+					const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
 					analyserRef.current.getByteFrequencyData(dataArray);
 
 					let sum = 0;
@@ -1077,9 +971,7 @@ export const LiveMicrophoneWaveform = ({
 			ctx.clearRect(0, 0, rect.width, rect.height);
 
 			const computedBarColor =
-				barColor ||
-				getComputedStyle(canvas).getPropertyValue("--foreground") ||
-				"#000";
+				barColor || getComputedStyle(canvas).getPropertyValue("--foreground") || "#000";
 
 			const step = barWidth + barGap;
 			const barCount = Math.floor(rect.width / step);
@@ -1202,26 +1094,15 @@ export const LiveMicrophoneWaveform = ({
 			setDragOffset?.(clampedOffset);
 
 			const now = Date.now();
-			if (
-				enableAudioPlayback &&
-				audioBufferRef.current &&
-				now - lastScrubTime > 50
-			) {
+			if (enableAudioPlayback && audioBufferRef.current && now - lastScrubTime > 50) {
 				lastScrubTime = now;
 				const offsetBars = Math.floor(clampedOffset / step);
-				const rightmostBarIndex = Math.max(
-					0,
-					Math.min(maxBars - 1, maxBars - 1 - offsetBars),
-				);
-				const audioPosition =
-					(rightmostBarIndex / maxBars) * audioBufferRef.current.duration;
+				const rightmostBarIndex = Math.max(0, Math.min(maxBars - 1, maxBars - 1 - offsetBars));
+				const audioPosition = (rightmostBarIndex / maxBars) * audioBufferRef.current.duration;
 				const direction = e.clientX - lastMouseX;
 				lastMouseX = e.clientX;
 				playScrubSound(
-					Math.max(
-						0,
-						Math.min(audioBufferRef.current.duration - 0.1, audioPosition),
-					),
+					Math.max(0, Math.min(audioBufferRef.current.duration - 0.1, audioPosition)),
 					direction,
 				);
 			}
@@ -1234,17 +1115,10 @@ export const LiveMicrophoneWaveform = ({
 				const step = barWidth + barGap;
 				const maxBars = historyRef.current.length;
 				const offsetBars = Math.floor(dragOffset / step);
-				const rightmostBarIndex = Math.max(
-					0,
-					Math.min(maxBars - 1, maxBars - 1 - offsetBars),
-				);
-				const audioPosition =
-					(rightmostBarIndex / maxBars) * audioBufferRef.current.duration;
+				const rightmostBarIndex = Math.max(0, Math.min(maxBars - 1, maxBars - 1 - offsetBars));
+				const audioPosition = (rightmostBarIndex / maxBars) * audioBufferRef.current.duration;
 				playFromPosition(
-					Math.max(
-						0,
-						Math.min(audioBufferRef.current.duration - 0.1, audioPosition),
-					),
+					Math.max(0, Math.min(audioBufferRef.current.duration - 0.1, audioPosition)),
 				);
 			}
 
@@ -1285,20 +1159,12 @@ export const LiveMicrophoneWaveform = ({
 			ref={containerRef}
 			role={!active && historyRef.current.length > 0 ? "slider" : undefined}
 			aria-label={
-				!active && historyRef.current.length > 0
-					? "Drag to scrub through recording"
-					: undefined
+				!active && historyRef.current.length > 0 ? "Drag to scrub through recording" : undefined
 			}
-			aria-valuenow={
-				!active && historyRef.current.length > 0
-					? Math.abs(dragOffset)
-					: undefined
-			}
+			aria-valuenow={!active && historyRef.current.length > 0 ? Math.abs(dragOffset) : undefined}
 			aria-valuemin={!active && historyRef.current.length > 0 ? 0 : undefined}
 			aria-valuemax={
-				!active && historyRef.current.length > 0
-					? historyRef.current.length
-					: undefined
+				!active && historyRef.current.length > 0 ? historyRef.current.length : undefined
 			}
 			tabIndex={!active && historyRef.current.length > 0 ? 0 : undefined}
 			style={{ height: heightStyle }}
@@ -1309,10 +1175,7 @@ export const LiveMicrophoneWaveform = ({
 	);
 };
 
-export type RecordingWaveformProps = Omit<
-	WaveformProps,
-	"data" | "onBarClick"
-> & {
+export type RecordingWaveformProps = Omit<WaveformProps, "data" | "onBarClick"> & {
 	recording?: boolean;
 	fftSize?: number;
 	smoothingTimeConstant?: number;
@@ -1385,10 +1248,7 @@ export const RecordingWaveform = ({
 			if (streamRef.current) {
 				streamRef.current.getTracks().forEach((track) => track.stop());
 			}
-			if (
-				audioContextRef.current &&
-				audioContextRef.current.state !== "closed"
-			) {
+			if (audioContextRef.current && audioContextRef.current.state !== "closed") {
 				audioContextRef.current.close();
 			}
 
@@ -1414,8 +1274,7 @@ export const RecordingWaveform = ({
 
 				const audioContext = new (
 					window.AudioContext ||
-					(window as unknown as { webkitAudioContext: typeof AudioContext })
-						.webkitAudioContext
+					(window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
 				)();
 				const analyser = audioContext.createAnalyser();
 				analyser.fftSize = fftSize;
@@ -1437,10 +1296,7 @@ export const RecordingWaveform = ({
 			if (streamRef.current) {
 				streamRef.current.getTracks().forEach((track) => track.stop());
 			}
-			if (
-				audioContextRef.current &&
-				audioContextRef.current.state !== "closed"
-			) {
+			if (audioContextRef.current && audioContextRef.current.state !== "closed") {
 				audioContextRef.current.close();
 			}
 		};
@@ -1458,9 +1314,7 @@ export const RecordingWaveform = ({
 				lastUpdateRef.current = currentTime;
 
 				if (analyserRef.current) {
-					const dataArray = new Uint8Array(
-						analyserRef.current.frequencyBinCount,
-					);
+					const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
 					analyserRef.current.getByteFrequencyData(dataArray);
 
 					let sum = 0;
@@ -1477,9 +1331,7 @@ export const RecordingWaveform = ({
 			ctx.clearRect(0, 0, rect.width, rect.height);
 
 			const computedBarColor =
-				barColor ||
-				getComputedStyle(canvas).getPropertyValue("--foreground") ||
-				"#000";
+				barColor || getComputedStyle(canvas).getPropertyValue("--foreground") || "#000";
 
 			const dataToRender = recording ? recordingDataRef.current : recordedData;
 
@@ -1498,11 +1350,7 @@ export const RecordingWaveform = ({
 					startIndex = Math.max(0, dataToRender.length - barsVisible);
 				}
 
-				for (
-					let i = 0;
-					i < barsVisible && startIndex + i < dataToRender.length;
-					i++
-				) {
+				for (let i = 0; i < barsVisible && startIndex + i < dataToRender.length; i++) {
 					const value = dataToRender[startIndex + i] || 0.1;
 					const x = i * step;
 					const barHeight = Math.max(4, value * rect.height * 0.7);
@@ -1608,14 +1456,8 @@ export const RecordingWaveform = ({
 
 	return (
 		<div
-			aria-label={
-				isRecordingComplete && !recording
-					? "Drag to scrub through recording"
-					: undefined
-			}
-			aria-valuenow={
-				isRecordingComplete && !recording ? viewPosition * 100 : undefined
-			}
+			aria-label={isRecordingComplete && !recording ? "Drag to scrub through recording" : undefined}
+			aria-valuenow={isRecordingComplete && !recording ? viewPosition * 100 : undefined}
 			aria-valuemin={isRecordingComplete && !recording ? 0 : undefined}
 			aria-valuemax={isRecordingComplete && !recording ? 100 : undefined}
 			className={cn(

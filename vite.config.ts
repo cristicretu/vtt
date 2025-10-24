@@ -1,7 +1,7 @@
-import { defineConfig } from "vite";
-import viteReact from "@vitejs/plugin-react";
 import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
+import viteReact from "@vitejs/plugin-react";
 import path from "path";
+import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
@@ -52,9 +52,7 @@ export default defineConfig({
 				],
 			},
 			workbox: {
-				globPatterns: [
-					"**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp,woff,woff2}",
-				],
+				globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp,woff,woff2}"],
 				navigateFallback: null, // Don't use fallback for SPA routing
 				runtimeCaching: [
 					{

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
 import { useTexture } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
 export type AgentState = null | "thinking" | "listening" | "talking";
@@ -92,8 +92,7 @@ function Scene({
 	getOutputVolume?: () => number;
 }) {
 	const { gl } = useThree();
-	const circleRef =
-		useRef<THREE.Mesh<THREE.CircleGeometry, THREE.ShaderMaterial>>(null);
+	const circleRef = useRef<THREE.Mesh<THREE.CircleGeometry, THREE.ShaderMaterial>>(null);
 	const initialColorsRef = useRef<[string, string]>(colors);
 	const targetColor1Ref = useRef(new THREE.Color(colors[0]));
 	const targetColor2Ref = useRef(new THREE.Color(colors[1]));
@@ -129,13 +128,9 @@ function Scene({
 		);
 	}, [manualOutput, outputVolumeRef, getOutputVolume]);
 
-	const random = useMemo(
-		() => splitmix32(seed ?? Math.floor(Math.random() * 2 ** 32)),
-		[seed],
-	);
+	const random = useMemo(() => splitmix32(seed ?? Math.floor(Math.random() * 2 ** 32)), [seed]);
 	const offsets = useMemo(
-		() =>
-			new Float32Array(Array.from({ length: 7 }, () => random() * Math.PI * 2)),
+		() => new Float32Array(Array.from({ length: 7 }, () => random() * Math.PI * 2)),
 		[random],
 	);
 
@@ -179,12 +174,8 @@ function Scene({
 		let targetIn = 0;
 		let targetOut = 0.3;
 		if (modeRef.current === "manual") {
-			targetIn = clamp01(
-				manualInput ?? inputVolumeRef?.current ?? getInputVolume?.() ?? 0,
-			);
-			targetOut = clamp01(
-				manualOutput ?? outputVolumeRef?.current ?? getOutputVolume?.() ?? 0,
-			);
+			targetIn = clamp01(manualInput ?? inputVolumeRef?.current ?? getInputVolume?.() ?? 0);
+			targetOut = clamp01(manualOutput ?? outputVolumeRef?.current ?? getOutputVolume?.() ?? 0);
 		} else {
 			const t = u.uTime.value * 2;
 			if (agentRef.current === null) {
@@ -207,7 +198,7 @@ function Scene({
 		curInRef.current += (targetIn - curInRef.current) * 0.2;
 		curOutRef.current += (targetOut - curOutRef.current) * 0.2;
 
-		const targetSpeed = 0.1 + (1 - Math.pow(curOutRef.current - 1, 2)) * 0.9;
+		const targetSpeed = 0.1 + (1 - (curOutRef.current - 1) ** 2) * 0.9;
 		animSpeedRef.current += (targetSpeed - animSpeedRef.current) * 0.12;
 
 		u.uAnimation.value += delta * animSpeedRef.current;
@@ -226,16 +217,14 @@ function Scene({
 			}, 1);
 		};
 		canvas.addEventListener("webglcontextlost", onContextLost, false);
-		return () =>
-			canvas.removeEventListener("webglcontextlost", onContextLost, false);
+		return () => canvas.removeEventListener("webglcontextlost", onContextLost, false);
 	}, [gl]);
 
 	const uniforms = useMemo(() => {
 		perlinNoiseTexture.wrapS = THREE.RepeatWrapping;
 		perlinNoiseTexture.wrapT = THREE.RepeatWrapping;
 		const isDark =
-			typeof document !== "undefined" &&
-			document.documentElement.classList.contains("dark");
+			typeof document !== "undefined" && document.documentElement.classList.contains("dark");
 		return {
 			uColor1: new THREE.Uniform(new THREE.Color(initialColorsRef.current[0])),
 			uColor2: new THREE.Uniform(new THREE.Color(initialColorsRef.current[1])),
@@ -264,7 +253,7 @@ function Scene({
 }
 
 function splitmix32(a: number) {
-	return function () {
+	return () => {
 		a |= 0;
 		a = (a + 0x9e3779b9) | 0;
 		let t = a ^ (a >>> 16);

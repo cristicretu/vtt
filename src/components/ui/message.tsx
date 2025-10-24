@@ -1,8 +1,7 @@
-import type { ComponentProps, HTMLAttributes } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-
-import { cn } from "@/lib/utils";
+import type { ComponentProps, HTMLAttributes } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
 	from: "user" | "assistant";
@@ -44,16 +43,8 @@ const messageContentVariants = cva(
 export type MessageContentProps = HTMLAttributes<HTMLDivElement> &
 	VariantProps<typeof messageContentVariants>;
 
-export const MessageContent = ({
-	children,
-	className,
-	variant,
-	...props
-}: MessageContentProps) => (
-	<div
-		className={cn(messageContentVariants({ variant, className }))}
-		{...props}
-	>
+export const MessageContent = ({ children, className, variant, ...props }: MessageContentProps) => (
+	<div className={cn(messageContentVariants({ variant, className }))} {...props}>
 		{children}
 	</div>
 );
@@ -63,13 +54,8 @@ export type MessageAvatarProps = ComponentProps<typeof Avatar> & {
 	name?: string;
 };
 
-export const MessageAvatar = ({
-	src,
-	name,
-	className,
-	...props
-}: MessageAvatarProps) => (
-	<Avatar className={cn("ring-border size-8 ring-1", className)} {...props}>
+export const MessageAvatar = ({ src, name, className, ...props }: MessageAvatarProps) => (
+	<Avatar className={cn("size-8 ring-1 ring-border", className)} {...props}>
 		<AvatarImage alt="" className="mt-0 mb-0" src={src} />
 		<AvatarFallback>{name?.slice(0, 2) || "ME"}</AvatarFallback>
 	</Avatar>

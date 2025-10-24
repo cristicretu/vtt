@@ -1,9 +1,5 @@
-import { QueryClient } from "@tanstack/react-query";
-import {
-	createRootRouteWithContext,
-	Outlet,
-	useRouter,
-} from "@tanstack/react-router";
+import type { QueryClient } from "@tanstack/react-query";
+import { createRootRouteWithContext, Outlet, useRouter } from "@tanstack/react-router";
 import React, { Suspense } from "react";
 import { Helmet } from "react-helmet-async";
 
@@ -24,9 +20,7 @@ export const Route = createRootRouteWithContext<{
 }>()({
 	component: () => {
 		const router = useRouter();
-		const matchWithTitle = [...router.state.matches]
-			.reverse()
-			.find((d) => d.routeContext?.title);
+		const matchWithTitle = [...router.state.matches].reverse().find((d) => d.routeContext?.title);
 		const title = matchWithTitle?.routeContext.title || "Convex SaaS";
 
 		return (
