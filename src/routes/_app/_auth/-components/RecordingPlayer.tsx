@@ -39,6 +39,25 @@ export function RecordingPlayer({ className }: RecordingPlayerProps) {
 	const [volume, setVolume] = React.useState(0.7);
 	const [isMuted, setIsMuted] = React.useState(false);
 	const [previousVolume, setPreviousVolume] = React.useState(0.7);
+	const [sidebarWidth, setSidebarWidth] = React.useState("16rem");
+
+	// Listen to sidebar width changes
+	React.useEffect(() => {
+		const handleSidebarWidthChange = (event: CustomEvent<{ width: string }>) => {
+			setSidebarWidth(event.detail.width);
+		};
+
+		// Initial load from localStorage
+		const stored = localStorage.getItem("sidebar_width");
+		if (stored) {
+			setSidebarWidth(stored);
+		}
+
+		window.addEventListener("sidebarWidthChange", handleSidebarWidthChange as EventListener);
+		return () => {
+			window.removeEventListener("sidebarWidthChange", handleSidebarWidthChange as EventListener);
+		};
+	}, []);
 
 	// Load recording from localStorage on mount
 	React.useEffect(() => {
@@ -189,9 +208,18 @@ export function RecordingPlayer({ className }: RecordingPlayerProps) {
 	return (
 		<div
 			className={cn(
-				"relative right-0 bottom-0 left-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+				"fixed bottom-0 z-50 border-t bg-background/95 backdrop-blur transition-all duration-200 ease-out supports-[backdrop-filter]:bg-background/60",
+				// On mobile, full width from left
+				"left-0 w-full",
+				// On desktop, offset by sidebar width
+				"md:left-[var(--sidebar-offset)] md:w-[calc(100vw-var(--sidebar-offset))]",
 				className,
 			)}
+			style={
+				{
+					"--sidebar-offset": sidebarWidth,
+				} as React.CSSProperties
+			}
 		>
 			{currentRecording && (
 				<audio ref={audioRef} src={currentRecording.recording} preload="metadata" />

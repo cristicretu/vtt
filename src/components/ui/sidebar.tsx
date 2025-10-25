@@ -109,6 +109,16 @@ const SidebarProvider = React.forwardRef<
 		// This makes it easier to style the sidebar with Tailwind classes.
 		const state = open ? "expanded" : "collapsed";
 
+		// Update localStorage with the current sidebar width
+		React.useEffect(() => {
+			if (typeof window !== "undefined") {
+				const width = open ? SIDEBAR_WIDTH : "0rem";
+				localStorage.setItem("sidebar_width", width);
+				// Dispatch a custom event so other components can listen to sidebar width changes
+				window.dispatchEvent(new CustomEvent("sidebarWidthChange", { detail: { width } }));
+			}
+		}, [open]);
+
 		const contextValue = React.useMemo<SidebarContextProps>(
 			() => ({
 				state,
