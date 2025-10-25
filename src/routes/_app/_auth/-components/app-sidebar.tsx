@@ -75,7 +75,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
 	return (
 		<>
-			{shouldShowTrigger && <SidebarTrigger />}
+			{shouldShowTrigger && <SidebarTrigger className="absolute top-0 left-0 z-50" />}
 			<Sidebar collapsible="offcanvas" className="group group/sidebar">
 				<SidebarHeader className="border-b">
 					<div className="flex items-center justify-between gap-2 px-2 py-1">

@@ -1,7 +1,7 @@
 import { useConvexAuth } from "@convex-dev/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Loader2, Mic } from "lucide-react";
-import { Route as DashboardRoute } from "@/routes/_app/_auth/_layout/dashboard";
+import { Route as DashboardRoute } from "@/routes/_app/_auth/_layout/dashboard.index";
 import { Route as AuthLoginRoute } from "@/routes/_app/login/_layout.index";
 import siteConfig from "~/site.config";
 import { Logo } from "../components/ui/logo";
