@@ -132,7 +132,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
 												placeholder="Search patients..."
 												value={searchQuery}
 												onChange={(e) => setSearchQuery(e.target.value)}
-												className="h-8 border-0 bg-transparent px-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+												className="h-8 border-0 bg-transparent px-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
 												onKeyDown={(e) => {
 													if (e.key === "Escape") {
 														handleSearchClose();

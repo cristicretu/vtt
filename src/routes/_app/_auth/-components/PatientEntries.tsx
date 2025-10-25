@@ -9,7 +9,6 @@ import {
 	getFilteredRowModel,
 	getPaginationRowModel,
 	getSortedRowModel,
-	type RowSelectionState,
 	type SortingState,
 	useReactTable,
 } from "@tanstack/react-table";
@@ -48,6 +47,8 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import type { Entry } from "~/types";
+import { patientsData } from "~/types";
+import { loadRecording } from "./RecordingPlayer";
 
 // Define columns for the Entry table
 const columns: ColumnDef<Entry>[] = [
@@ -143,15 +144,22 @@ const columns: ColumnDef<Entry>[] = [
 		accessorKey: "recording",
 		header: "Recording",
 		cell: ({ row }) => {
-			const recording = row.getValue("recording") as string;
+			const entry = row.original;
+			const patient = patientsData.find((p) => p.id === entry.patientId);
+
 			return (
 				<Button
 					variant="ghost"
 					size="sm"
 					className="h-8 w-8 p-0"
 					onClick={() => {
-						// Handle playing the recording
-						console.log("Play recording:", recording);
+						loadRecording({
+							id: entry.id,
+							patientId: entry.patientId,
+							patientName: patient?.fullName || "Unknown Patient",
+							recording: entry.recording,
+							createdAt: entry.createdAt,
+						});
 					}}
 				>
 					<Play className="h-4 w-4" />
@@ -370,7 +378,20 @@ export function PatientEntries({ entries }: PatientEntriesProps) {
 							</div>
 							<div className="rounded-lg border bg-background p-4">
 								<div className="flex items-center gap-3">
-									<Button size="icon" variant="outline">
+									<Button
+										size="icon"
+										variant="outline"
+										onClick={() => {
+											const patient = patientsData.find((p) => p.id === selectedEntry.patientId);
+											loadRecording({
+												id: selectedEntry.id,
+												patientId: selectedEntry.patientId,
+												patientName: patient?.fullName || "Unknown Patient",
+												recording: selectedEntry.recording,
+												createdAt: selectedEntry.createdAt,
+											});
+										}}
+									>
 										<Play className="h-4 w-4" />
 									</Button>
 									<div className="flex-1">

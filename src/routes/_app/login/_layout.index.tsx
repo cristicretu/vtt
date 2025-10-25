@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Route as DashboardRoute } from "@/routes/_app/_auth/_layout/dashboard.index";
+import { Route as DashboardRoute } from "@/routes/_app/_auth/_layout//dashboard/index";
 
 export const Route = createFileRoute("/_app/login/_layout/")({
 	component: Login,
