@@ -1,18 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
-import { render } from "@react-email/render";
-import {
-	Body,
-	Container,
-	Head,
-	Hr,
-	Html,
-	Link,
-	Img,
-	Preview,
-	Text,
-} from "@react-email/components";
+
 import { sendEmail } from "@cvx/email";
 import { SITE_URL } from "@cvx/env";
+import { Body, Container, Head, Hr, Html, Img, Link, Preview, Text } from "@react-email/components";
+import { render } from "@react-email/render";
 
 type SubscriptionEmailOptions = {
 	email: string;
@@ -35,15 +26,8 @@ export function SubscriptionSuccessEmail({ email }: SubscriptionEmailOptions) {
 				}}
 			>
 				<Container style={{ margin: "0 auto", padding: "20px 0 48px" }}>
-					<Img
-						src={`${SITE_URL}/images/convex-logo-email.jpg`}
-						width="40"
-						height="37"
-						alt=""
-					/>
-					<Text style={{ fontSize: "16px", lineHeight: "26px" }}>
-						Hello {email}!
-					</Text>
+					<Img src={`${SITE_URL}/images/convex-logo-email.jpg`} width="40" height="37" alt="" />
+					<Text style={{ fontSize: "16px", lineHeight: "26px" }}>Hello {email}!</Text>
 					<Text style={{ fontSize: "16px", lineHeight: "26px" }}>
 						Your subscription to PRO has been successfully processed.
 						<br />
@@ -53,9 +37,7 @@ export function SubscriptionSuccessEmail({ email }: SubscriptionEmailOptions) {
 						The <Link href="http://localhost:3000">domain-name.com</Link> team.
 					</Text>
 					<Hr style={{ borderColor: "#cccccc", margin: "20px 0" }} />
-					<Text style={{ color: "#8898aa", fontSize: "12px" }}>
-						200 domain-name.com
-					</Text>
+					<Text style={{ color: "#8898aa", fontSize: "12px" }}>200 domain-name.com</Text>
 				</Container>
 			</Body>
 		</Html>
@@ -81,9 +63,7 @@ export function SubscriptionErrorEmail({ email }: SubscriptionEmailOptions) {
 						height="37"
 						alt=""
 					/>
-					<Text style={{ fontSize: "16px", lineHeight: "26px" }}>
-						Hello {email}.
-					</Text>
+					<Text style={{ fontSize: "16px", lineHeight: "26px" }}>Hello {email}.</Text>
 					<Text style={{ fontSize: "16px", lineHeight: "26px" }}>
 						We were unable to process your subscription to PRO tier.
 						<br />
@@ -93,9 +73,7 @@ export function SubscriptionErrorEmail({ email }: SubscriptionEmailOptions) {
 						The <Link href="http://localhost:3000">domain-name.com</Link> team.
 					</Text>
 					<Hr style={{ borderColor: "#cccccc", margin: "20px 0" }} />
-					<Text style={{ color: "#8898aa", fontSize: "12px" }}>
-						200 domain-name.com
-					</Text>
+					<Text style={{ color: "#8898aa", fontSize: "12px" }}>200 domain-name.com</Text>
 				</Container>
 			</Body>
 		</Html>

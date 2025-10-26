@@ -90,10 +90,9 @@ function useAnimation(
 						if (options.loop) {
 							options.onFrame?.(0);
 							return 0;
-						} else {
-							setIsPlaying(false);
-							return prev;
 						}
+						setIsPlaying(false);
+						return prev;
 					}
 					options.onFrame?.(next);
 					return next;
@@ -523,25 +522,11 @@ export const Matrix = React.forwardRef<HTMLDivElement, MatrixProps>(
 						</radialGradient>
 
 						<radialGradient id="matrix-pixel-off" cx="50%" cy="50%" r="50%">
-							<stop
-								offset="0%"
-								stopColor="var(--muted-foreground)"
-								stopOpacity="1"
-							/>
-							<stop
-								offset="100%"
-								stopColor="var(--muted-foreground)"
-								stopOpacity="0.7"
-							/>
+							<stop offset="0%" stopColor="var(--muted-foreground)" stopOpacity="1" />
+							<stop offset="100%" stopColor="var(--muted-foreground)" stopOpacity="0.7" />
 						</radialGradient>
 
-						<filter
-							id="matrix-glow"
-							x="-50%"
-							y="-50%"
-							width="200%"
-							height="200%"
-						>
+						<filter id="matrix-glow" x="-50%" y="-50%" width="200%" height="200%">
 							<feGaussianBlur stdDeviation="2" result="blur" />
 							<feComposite in="SourceGraphic" in2="blur" operator="over" />
 						</filter>
@@ -568,9 +553,7 @@ export const Matrix = React.forwardRef<HTMLDivElement, MatrixProps>(
 							const opacity = clamp(brightness * value);
 							const isActive = opacity > 0.5;
 							const isOn = opacity > 0.05;
-							const fill = isOn
-								? "url(#matrix-pixel-on)"
-								: "url(#matrix-pixel-off)";
+							const fill = isOn ? "url(#matrix-pixel-on)" : "url(#matrix-pixel-off)";
 
 							const scale = isActive ? 1.1 : 1;
 							const radius = (size / 2) * 0.9;

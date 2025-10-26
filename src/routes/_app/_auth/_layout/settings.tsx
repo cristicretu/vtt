@@ -1,37 +1,26 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Upload } from "lucide-react";
-import { useUploadFiles } from "@xixixao/uploadstuff/react";
-import { useDoubleCheck } from "@/components/ui/use-double-check";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
-import { api } from "~/convex/_generated/api";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { useRef } from "react";
 import { useForm } from "@tanstack/react-form";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import { zodValidator } from "@tanstack/zod-form-adapter";
-import * as validators from "@/lib/validators";
+import { useUploadFiles } from "@xixixao/uploadstuff/react";
+import { Upload } from "lucide-react";
+import { useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useDoubleCheck } from "@/hooks/use-double-check";
 import { useSignOut } from "@/lib/utils";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import * as validators from "@/lib/validators";
+import { api } from "~/convex/_generated/api";
 
-export const Route = createFileRoute("/_app/_auth/dashboard/_layout/settings/")(
-	{
-		component: DashboardSettings,
-		beforeLoad: () => ({
-			title: "Settings",
-			headerTitle: "Settings",
-			headerDescription: "Manage your account settings.",
-		}),
-	},
-);
+export const Route = createFileRoute("/_app/_auth/_layout/settings")({
+	component: DashboardSettings,
+	beforeLoad: () => ({
+		title: "Settings",
+		headerTitle: "Settings",
+		headerDescription: "Manage your account settings.",
+	}),
+});
 
 export default function DashboardSettings() {
 	const { data: user } = useQuery(convexQuery(api.app.getCurrentUser, {}));
@@ -88,8 +77,8 @@ export default function DashboardSettings() {
 			<div className="flex w-full flex-col items-start rounded-lg border border-border bg-card">
 				<div className="flex w-full items-start justify-between rounded-lg p-6">
 					<div className="flex flex-col gap-2">
-						<h2 className="text-xl font-medium text-primary">Your Avatar</h2>
-						<p className="text-sm font-normal text-primary/60">
+						<h2 className="font-medium text-primary text-xl">Your Avatar</h2>
+						<p className="font-normal text-primary/60 text-sm">
 							This is your avatar. It will be displayed on your profile.
 						</p>
 					</div>
@@ -104,7 +93,7 @@ export default function DashboardSettings() {
 								alt={user.username ?? user.email}
 							/>
 						) : (
-							<div className="h-20 w-20 rounded-full bg-gradient-to-br from-lime-400 from-10% via-cyan-300 to-blue-500" />
+							<div className="h-20 w-20 rounded-full bg-gradient-to-br from-10% from-lime-400 via-cyan-300 to-blue-500" />
 						)}
 						<div className="absolute z-10 hidden h-full w-full items-center justify-center bg-primary/40 group-hover:flex">
 							<Upload className="h-6 w-6 text-secondary" />
@@ -130,8 +119,8 @@ export default function DashboardSettings() {
 						}}
 					/>
 				</div>
-				<div className="flex min-h-14 w-full items-center justify-between rounded-lg rounded-t-none border-t border-border bg-secondary px-6 dark:bg-card">
-					<p className="text-sm font-normal text-primary/60">
+				<div className="flex min-h-14 w-full items-center justify-between rounded-lg rounded-t-none border-border border-t bg-secondary px-6 dark:bg-card">
+					<p className="font-normal text-primary/60 text-sm">
 						Click on the avatar to upload a custom one from your files.
 					</p>
 					{user.avatarUrl && (
@@ -160,8 +149,8 @@ export default function DashboardSettings() {
 			>
 				<div className="flex w-full flex-col gap-4 rounded-lg p-6">
 					<div className="flex flex-col gap-2">
-						<h2 className="text-xl font-medium text-primary">Your Username</h2>
-						<p className="text-sm font-normal text-primary/60">
+						<h2 className="font-medium text-primary text-xl">Your Username</h2>
+						<p className="font-normal text-primary/60 text-sm">
 							This is your username. It will be displayed on your profile.
 						</p>
 					</div>
@@ -186,13 +175,13 @@ export default function DashboardSettings() {
 						)}
 					/>
 					{usernameForm.state.fieldMeta.username?.errors.length > 0 && (
-						<p className="text-sm text-destructive dark:text-destructive-foreground">
+						<p className="text-destructive text-sm dark:text-destructive-foreground">
 							{usernameForm.state.fieldMeta.username?.errors.join(" ")}
 						</p>
 					)}
 				</div>
-				<div className="flex min-h-14 w-full items-center justify-between rounded-lg rounded-t-none border-t border-border bg-secondary px-6 dark:bg-card">
-					<p className="text-sm font-normal text-primary/60">
+				<div className="flex min-h-14 w-full items-center justify-between rounded-lg rounded-t-none border-border border-t bg-secondary px-6 dark:bg-card">
+					<p className="font-normal text-primary/60 text-sm">
 						Please use 32 characters at maximum.
 					</p>
 					<Button type="submit" size="sm">
@@ -204,14 +193,14 @@ export default function DashboardSettings() {
 			{/* Delete Account */}
 			<div className="flex w-full flex-col items-start rounded-lg border border-destructive bg-card">
 				<div className="flex flex-col gap-2 p-6">
-					<h2 className="text-xl font-medium text-primary">Delete Account</h2>
-					<p className="text-sm font-normal text-primary/60">
-						Permanently delete your Convex SaaS account, all of your projects,
-						links and their respective stats.
+					<h2 className="font-medium text-primary text-xl">Delete Account</h2>
+					<p className="font-normal text-primary/60 text-sm">
+						Permanently delete your Convex SaaS account, all of your projects, links and their
+						respective stats.
 					</p>
 				</div>
-				<div className="flex min-h-14 w-full items-center justify-between rounded-lg rounded-t-none border-t border-border bg-red-500/10 px-6 dark:bg-red-500/10">
-					<p className="text-sm font-normal text-primary/60">
+				<div className="flex min-h-14 w-full items-center justify-between rounded-lg rounded-t-none border-border border-t bg-red-500/10 px-6 dark:bg-red-500/10">
+					<p className="font-normal text-primary/60 text-sm">
 						This action cannot be undone, proceed with caution.
 					</p>
 					<Button

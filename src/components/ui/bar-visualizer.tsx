@@ -10,14 +10,10 @@ export interface AudioAnalyserOptions {
 	maxDecibels?: number;
 }
 
-function createAudioAnalyser(
-	mediaStream: MediaStream,
-	options: AudioAnalyserOptions = {},
-) {
+function createAudioAnalyser(mediaStream: MediaStream, options: AudioAnalyserOptions = {}) {
 	const audioContext = new (
 		window.AudioContext ||
-		(window as unknown as { webkitAudioContext: typeof AudioContext })
-			.webkitAudioContext
+		(window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
 	)();
 	const source = audioContext.createMediaStreamSource(mediaStream);
 	const analyser = audioContext.createAnalyser();
@@ -26,10 +22,8 @@ function createAudioAnalyser(
 	if (options.smoothingTimeConstant !== undefined) {
 		analyser.smoothingTimeConstant = options.smoothingTimeConstant;
 	}
-	if (options.minDecibels !== undefined)
-		analyser.minDecibels = options.minDecibels;
-	if (options.maxDecibels !== undefined)
-		analyser.maxDecibels = options.maxDecibels;
+	if (options.minDecibels !== undefined) analyser.minDecibels = options.minDecibels;
+	if (options.maxDecibels !== undefined) analyser.maxDecibels = options.maxDecibels;
 
 	source.connect(analyser);
 
@@ -58,12 +52,7 @@ export function useAudioVolume(
 	// Memoize options to prevent unnecessary re-renders
 	const memoizedOptions = useMemo(
 		() => options,
-		[
-			options.fftSize,
-			options.smoothingTimeConstant,
-			options.minDecibels,
-			options.maxDecibels,
-		],
+		[options.fftSize, options.smoothingTimeConstant, options.minDecibels, options.maxDecibels],
 	);
 
 	useEffect(() => {
@@ -73,10 +62,7 @@ export function useAudioVolume(
 			return;
 		}
 
-		const { analyser, cleanup } = createAudioAnalyser(
-			mediaStream,
-			memoizedOptions,
-		);
+		const { analyser, cleanup } = createAudioAnalyser(mediaStream, memoizedOptions);
 
 		const bufferLength = analyser.frequencyBinCount;
 		const dataArray = new Uint8Array(bufferLength);
@@ -134,7 +120,7 @@ const multibandDefaults: MultiBandVolumeOptions = {
 
 // Memoized normalization function to avoid recreating on each render
 const normalizeDb = (value: number) => {
-	if (value === -Infinity) return 0;
+	if (value === Number.NEGATIVE_INFINITY) return 0;
 	const minDb = -100;
 	const maxDb = -10;
 	const db = 1 - (Math.max(minDb, Math.min(maxDb, value)) * -1) / 100;
@@ -179,10 +165,7 @@ export function useMultibandVolume(
 			return;
 		}
 
-		const { analyser, cleanup } = createAudioAnalyser(
-			mediaStream,
-			opts.analyserOptions,
-		);
+		const { analyser, cleanup } = createAudioAnalyser(mediaStream, opts.analyserOptions);
 
 		const bufferLength = analyser.frequencyBinCount;
 		const dataArray = new Float32Array(bufferLength);
@@ -269,13 +252,14 @@ export const useBarAnimator = (
 	const sequence = useMemo(() => {
 		if (state === "thinking" || state === "listening") {
 			return generateListeningSequenceBar(columns);
-		} else if (state === "connecting" || state === "initializing") {
-			return generateConnectingSequenceBar(columns);
-		} else if (state === undefined || state === "speaking") {
-			return [new Array(columns).fill(0).map((_, idx) => idx)];
-		} else {
-			return [[]];
 		}
+		if (state === "connecting" || state === "initializing") {
+			return generateConnectingSequenceBar(columns);
+		}
+		if (state === undefined || state === "speaking") {
+			return [new Array(columns).fill(0).map((_, idx) => idx)];
+		}
+		return [[]];
 	}, [state, columns]);
 
 	useEffect(() => {
@@ -325,15 +309,9 @@ const generateListeningSequenceBar = (columns: number): number[][] => {
 	return [[center], [noIndex]];
 };
 
-export type AgentState =
-	| "connecting"
-	| "initializing"
-	| "listening"
-	| "speaking"
-	| "thinking";
+export type AgentState = "connecting" | "initializing" | "listening" | "speaking" | "thinking";
 
-export interface BarVisualizerProps
-	extends React.HTMLAttributes<HTMLDivElement> {
+export interface BarVisualizerProps extends React.HTMLAttributes<HTMLDivElement> {
 	/** Voice assistant state */
 	state?: AgentState;
 	/** Number of bars to display */
@@ -349,10 +327,7 @@ export interface BarVisualizerProps
 	centerAlign?: boolean;
 }
 
-const BarVisualizerComponent = React.forwardRef<
-	HTMLDivElement,
-	BarVisualizerProps
->(
+const BarVisualizerComponent = React.forwardRef<HTMLDivElement, BarVisualizerProps>(
 	(
 		{
 			state,
@@ -464,7 +439,7 @@ const BarVisualizerComponent = React.forwardRef<
 				className={cn(
 					"relative flex justify-center gap-1.5",
 					centerAlign ? "items-center" : "items-end",
-					"bg-muted h-32 w-full overflow-hidden rounded-lg p-4",
+					"h-32 w-full overflow-hidden rounded-lg bg-muted p-4",
 					className,
 				)}
 				style={{
@@ -473,19 +448,11 @@ const BarVisualizerComponent = React.forwardRef<
 				{...props}
 			>
 				{volumeBands.map((volume, index) => {
-					const heightPct = Math.min(
-						maxHeight,
-						Math.max(minHeight, volume * 100 + 5),
-					);
+					const heightPct = Math.min(maxHeight, Math.max(minHeight, volume * 100 + 5));
 					const isHighlighted = highlightedIndices?.includes(index) ?? false;
 
 					return (
-						<Bar
-							key={index}
-							heightPct={heightPct}
-							isHighlighted={isHighlighted}
-							state={state}
-						/>
+						<Bar key={index} heightPct={heightPct} isHighlighted={isHighlighted} state={state} />
 					);
 				})}
 			</div>
@@ -502,7 +469,7 @@ const Bar = React.memo<{
 	<div
 		data-highlighted={isHighlighted}
 		className={cn(
-			"max-w-[12px] min-w-[8px] flex-1 transition-all duration-150",
+			"min-w-[8px] max-w-[12px] flex-1 transition-all duration-150",
 			"rounded-full",
 			"bg-border data-[highlighted=true]:bg-primary",
 			state === "speaking" && "bg-primary",
@@ -518,22 +485,19 @@ const Bar = React.memo<{
 Bar.displayName = "Bar";
 
 // Wrap the main component with React.memo for prop comparison optimization
-const BarVisualizer = React.memo(
-	BarVisualizerComponent,
-	(prevProps, nextProps) => {
-		return (
-			prevProps.state === nextProps.state &&
-			prevProps.barCount === nextProps.barCount &&
-			prevProps.mediaStream === nextProps.mediaStream &&
-			prevProps.minHeight === nextProps.minHeight &&
-			prevProps.maxHeight === nextProps.maxHeight &&
-			prevProps.demo === nextProps.demo &&
-			prevProps.centerAlign === nextProps.centerAlign &&
-			prevProps.className === nextProps.className &&
-			JSON.stringify(prevProps.style) === JSON.stringify(nextProps.style)
-		);
-	},
-);
+const BarVisualizer = React.memo(BarVisualizerComponent, (prevProps, nextProps) => {
+	return (
+		prevProps.state === nextProps.state &&
+		prevProps.barCount === nextProps.barCount &&
+		prevProps.mediaStream === nextProps.mediaStream &&
+		prevProps.minHeight === nextProps.minHeight &&
+		prevProps.maxHeight === nextProps.maxHeight &&
+		prevProps.demo === nextProps.demo &&
+		prevProps.centerAlign === nextProps.centerAlign &&
+		prevProps.className === nextProps.className &&
+		JSON.stringify(prevProps.style) === JSON.stringify(nextProps.style)
+	);
+});
 
 BarVisualizerComponent.displayName = "BarVisualizerComponent";
 BarVisualizer.displayName = "BarVisualizer";

@@ -1,8 +1,8 @@
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
-import App from "@/app";
 import { registerSW } from "virtual:pwa-register";
+import App from "@/app";
 
 // Register service worker
 const updateSW = registerSW({

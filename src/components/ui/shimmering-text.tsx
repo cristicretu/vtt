@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useMemo, useRef } from "react";
-import { motion, useInView, UseInViewOptions } from "motion/react";
+import { motion, type UseInViewOptions, useInView } from "motion/react";
+import type React from "react";
+import { useMemo, useRef } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -73,7 +74,8 @@ export function ShimmeringText({
 					"--spread": `${dynamicSpread}px`,
 					...(color && { "--base-color": color }),
 					...(shimmerColor && { "--shimmer-color": shimmerColor }),
-					backgroundImage: `var(--shimmer-bg), linear-gradient(var(--base-color), var(--base-color))`,
+					backgroundImage:
+						"var(--shimmer-bg), linear-gradient(var(--base-color), var(--base-color))",
 				} as React.CSSProperties
 			}
 			initial={{
@@ -90,7 +92,7 @@ export function ShimmeringText({
 			}
 			transition={{
 				backgroundPosition: {
-					repeat: repeat ? Infinity : 0,
+					repeat: repeat ? Number.POSITIVE_INFINITY : 0,
 					duration,
 					delay,
 					repeatDelay,

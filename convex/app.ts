@@ -2,9 +2,9 @@ import { internal } from "@cvx/_generated/api";
 import { mutation, query } from "@cvx/_generated/server";
 import { auth } from "@cvx/auth";
 import { currencyValidator, PLANS } from "@cvx/schema";
-import { asyncMap } from "convex-helpers";
 import { v } from "convex/values";
-import { User } from "~/types";
+import { asyncMap } from "convex-helpers";
+import type { User } from "~/types";
 
 export const getCurrentUser = query({
 	args: {},
@@ -23,12 +23,8 @@ export const getCurrentUser = query({
 		if (!user) {
 			return;
 		}
-		const plan = subscription?.planId
-			? await ctx.db.get(subscription.planId)
-			: undefined;
-		const avatarUrl = user.imageId
-			? await ctx.storage.getUrl(user.imageId)
-			: user.image;
+		const plan = subscription?.planId ? await ctx.db.get(subscription.planId) : undefined;
+		const avatarUrl = user.imageId ? await ctx.storage.getUrl(user.imageId) : user.image;
 		return {
 			...user,
 			avatarUrl: avatarUrl || undefined,
@@ -74,14 +70,10 @@ export const completeOnboarding = mutation({
 		if (user.customerId) {
 			return;
 		}
-		await ctx.scheduler.runAfter(
-			0,
-			internal.stripe.PREAUTH_createStripeCustomer,
-			{
-				currency: args.currency,
-				userId,
-			},
-		);
+		await ctx.scheduler.runAfter(0, internal.stripe.PREAUTH_createStripeCustomer, {
+			currency: args.currency,
+			userId,
+		});
 	},
 });
 
@@ -127,13 +119,11 @@ export const getActivePlans = query({
 		if (!userId) {
 			return;
 		}
-		const [free, pro] = await asyncMap(
-			[PLANS.FREE, PLANS.PRO] as const,
-			(key) =>
-				ctx.db
-					.query("plans")
-					.withIndex("key", (q) => q.eq("key", key))
-					.unique(),
+		const [free, pro] = await asyncMap([PLANS.FREE, PLANS.PRO] as const, (key) =>
+			ctx.db
+				.query("plans")
+				.withIndex("key", (q) => q.eq("key", key))
+				.unique(),
 		);
 		if (!free || !pro) {
 			throw new Error("Plan not found");
@@ -161,18 +151,13 @@ export const deleteCurrentUserAccount = mutation({
 			console.error("No subscription found");
 		} else {
 			await ctx.db.delete(subscription._id);
-			await ctx.scheduler.runAfter(
-				0,
-				internal.stripe.cancelCurrentUserSubscriptions,
-			);
+			await ctx.scheduler.runAfter(0, internal.stripe.cancelCurrentUserSubscriptions);
 		}
 		await ctx.db.delete(userId);
 		await asyncMap(["resend-otp", "github"], async (provider) => {
 			const authAccount = await ctx.db
 				.query("authAccounts")
-				.withIndex("userIdAndProvider", (q) =>
-					q.eq("userId", userId).eq("provider", provider),
-				)
+				.withIndex("userIdAndProvider", (q) => q.eq("userId", userId).eq("provider", provider))
 				.unique();
 			if (!authAccount) {
 				return;

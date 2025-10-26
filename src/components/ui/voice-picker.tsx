@@ -1,12 +1,7 @@
-import * as React from "react";
 import type { ElevenLabs } from "@elevenlabs/elevenlabs-js";
 import { Check, ChevronsUpDown, Pause, Play } from "lucide-react";
-
-import { cn } from "@/lib/utils";
-import {
-	AudioPlayerProvider,
-	useAudioPlayer,
-} from "@/components/ui/audio-player";
+import * as React from "react";
+import { AudioPlayerProvider, useAudioPlayer } from "@/components/ui/audio-player";
 import { Button } from "@/components/ui/button";
 import {
 	Command,
@@ -17,11 +12,8 @@ import {
 	CommandList,
 } from "@/components/ui/command";
 import { Orb } from "@/components/ui/orb";
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 interface VoicePickerProps {
 	voices: ElevenLabs.Voice[];
@@ -103,11 +95,7 @@ interface VoicePickerItemProps {
 	onSelect: () => void;
 }
 
-function VoicePickerItem({
-	voice,
-	isSelected,
-	onSelect,
-}: VoicePickerItemProps) {
+function VoicePickerItem({ voice, isSelected, onSelect }: VoicePickerItemProps) {
 	const [isHovered, setIsHovered] = React.useState(false);
 	const player = useAudioPlayer();
 
@@ -117,8 +105,7 @@ function VoicePickerItem({
 		[preview, voice],
 	);
 
-	const isPlaying =
-		audioItem && player.isItemActive(audioItem.id) && player.isPlaying;
+	const isPlaying = audioItem && player.isItemActive(audioItem.id) && player.isPlaying;
 
 	const handlePreview = React.useCallback(
 		async (e: React.MouseEvent) => {
@@ -137,11 +124,7 @@ function VoicePickerItem({
 	);
 
 	return (
-		<CommandItem
-			value={voice.voiceId!}
-			onSelect={onSelect}
-			className="flex items-center gap-3"
-		>
+		<CommandItem value={voice.voiceId!} onSelect={onSelect} className="flex items-center gap-3">
 			<div
 				className="relative z-10 size-8 shrink-0 cursor-pointer overflow-visible"
 				onMouseEnter={() => setIsHovered(true)}
@@ -166,26 +149,17 @@ function VoicePickerItem({
 			<div className="flex flex-1 flex-col gap-0.5">
 				<span className="font-medium">{voice.name}</span>
 				{voice.labels && (
-					<div className="text-muted-foreground flex items-center gap-1.5 text-xs">
+					<div className="flex items-center gap-1.5 text-muted-foreground text-xs">
 						{voice.labels.accent && <span>{voice.labels.accent}</span>}
 						{voice.labels.gender && <span>•</span>}
-						{voice.labels.gender && (
-							<span className="capitalize">{voice.labels.gender}</span>
-						)}
+						{voice.labels.gender && <span className="capitalize">{voice.labels.gender}</span>}
 						{voice.labels.age && <span>•</span>}
-						{voice.labels.age && (
-							<span className="capitalize">{voice.labels.age}</span>
-						)}
+						{voice.labels.age && <span className="capitalize">{voice.labels.age}</span>}
 					</div>
 				)}
 			</div>
 
-			<Check
-				className={cn(
-					"ml-auto size-4 shrink-0",
-					isSelected ? "opacity-100" : "opacity-0",
-				)}
-			/>
+			<Check className={cn("ml-auto size-4 shrink-0", isSelected ? "opacity-100" : "opacity-0")} />
 		</CommandItem>
 	);
 }

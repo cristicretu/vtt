@@ -1,17 +1,17 @@
-import { asyncMap } from "convex-helpers";
-import { ERRORS } from "~/errors";
+import { internal } from "@cvx/_generated/api";
 import { internalAction, internalMutation } from "@cvx/_generated/server";
+import { STRIPE_SECRET_KEY } from "@cvx/env";
 import schema, {
 	CURRENCIES,
-	Currency,
-	Interval,
+	type Currency,
 	INTERVALS,
-	PlanKey,
+	type Interval,
 	PLANS,
+	type PlanKey,
 } from "@cvx/schema";
-import { internal } from "@cvx/_generated/api";
 import { stripe } from "@cvx/stripe";
-import { STRIPE_SECRET_KEY } from "@cvx/env";
+import { asyncMap } from "convex-helpers";
+import { ERRORS } from "~/errors";
 
 const seedProducts = [
 	{
@@ -64,9 +64,7 @@ export default internalAction(async (ctx) => {
 	 * Skip Stripe initialization if no API key is configured (local dev)
 	 */
 	if (!STRIPE_SECRET_KEY) {
-		console.info(
-			"⚠️  No Stripe API key configured - skipping Stripe initialization",
-		);
+		console.info("⚠️  No Stripe API key configured - skipping Stripe initialization");
 		return;
 	}
 
@@ -83,15 +81,13 @@ export default internalAction(async (ctx) => {
 
 	const seededProducts = await asyncMap(seedProducts, async (product) => {
 		// Format prices to match Stripe's API.
-		const pricesByInterval = Object.entries(product.prices).flatMap(
-			([interval, price]) => {
-				return Object.entries(price).map(([currency, amount]) => ({
-					interval,
-					currency,
-					amount,
-				}));
-			},
-		);
+		const pricesByInterval = Object.entries(product.prices).flatMap(([interval, price]) => {
+			return Object.entries(price).map(([currency, amount]) => ({
+				interval,
+				currency,
+				amount,
+			}));
+		});
 
 		// Create Stripe product.
 		const stripeProduct = await stripe.products.create({
@@ -116,8 +112,7 @@ export default internalAction(async (ctx) => {
 
 		const getPrice = (currency: Currency, interval: Interval) => {
 			const price = stripePrices.find(
-				(price) =>
-					price.currency === currency && price.recurring?.interval === interval,
+				(price) => price.currency === currency && price.recurring?.interval === interval,
 			);
 			if (!price) {
 				throw new Error(ERRORS.STRIPE_SOMETHING_WENT_WRONG);
@@ -148,7 +143,7 @@ export default internalAction(async (ctx) => {
 			prices: stripePrices.map((price) => price.id),
 		};
 	});
-	console.info(`📦 Stripe Products has been successfully created.`);
+	console.info("📦 Stripe Products has been successfully created.");
 
 	// Configure Customer Portal.
 	await stripe.billingPortal.configurations.create({
@@ -174,8 +169,6 @@ export default internalAction(async (ctx) => {
 		},
 	});
 
-	console.info(`👒 Stripe Customer Portal has been successfully configured.`);
-	console.info(
-		"🎉 Visit: https://dashboard.stripe.com/test/products to see your products.",
-	);
+	console.info("👒 Stripe Customer Portal has been successfully configured.");
+	console.info("🎉 Visit: https://dashboard.stripe.com/test/products to see your products.");
 });

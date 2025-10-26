@@ -1,18 +1,12 @@
 "use client";
 
-import * as React from "react";
 import { CheckIcon, XIcon } from "lucide-react";
-
-import { cn } from "@/lib/utils";
+import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { LiveWaveform } from "@/components/ui/live-waveform";
+import { cn } from "@/lib/utils";
 
-export type VoiceButtonState =
-	| "idle"
-	| "recording"
-	| "processing"
-	| "success"
-	| "error";
+export type VoiceButtonState = "idle" | "recording" | "processing" | "success" | "error";
 
 export interface VoiceButtonProps
 	extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "onError"> {
@@ -49,13 +43,7 @@ export interface VoiceButtonProps
 	 * Custom variant for the button
 	 * @default "outline"
 	 */
-	variant?:
-		| "default"
-		| "destructive"
-		| "outline"
-		| "secondary"
-		| "ghost"
-		| "link";
+	variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
 
 	/**
 	 * Size of the button
@@ -85,10 +73,7 @@ export interface VoiceButtonProps
 	disabled?: boolean;
 }
 
-export const VoiceButton = React.forwardRef<
-	HTMLButtonElement,
-	VoiceButtonProps
->(
+export const VoiceButton = React.forwardRef<HTMLButtonElement, VoiceButtonProps>(
 	(
 		{
 			state = "idle",
@@ -112,15 +97,11 @@ export const VoiceButton = React.forwardRef<
 		React.useEffect(() => {
 			if (state === "success" || state === "error") {
 				setShowFeedback(true);
-				const timeout = setTimeout(
-					() => setShowFeedback(false),
-					feedbackDuration,
-				);
+				const timeout = setTimeout(() => setShowFeedback(false), feedbackDuration);
 				return () => clearTimeout(timeout);
-			} else {
-				// Reset feedback when state changes away from success/error
-				setShowFeedback(false);
 			}
+			// Reset feedback when state changes away from success/error
+			setShowFeedback(false);
 		}, [state, feedbackDuration]);
 
 		const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -158,21 +139,17 @@ export const VoiceButton = React.forwardRef<
 				{...props}
 			>
 				{size !== "icon" && displayLabel && (
-					<span className="inline-flex shrink-0 items-center justify-start">
-						{displayLabel}
-					</span>
+					<span className="inline-flex shrink-0 items-center justify-start">{displayLabel}</span>
 				)}
 
 				<div
 					className={cn(
 						"relative flex shrink-0 items-center justify-center overflow-hidden transition-all duration-300",
-						size === "icon"
-							? "absolute inset-0 rounded-sm border-0"
-							: "h-5 w-24 rounded-sm border",
+						size === "icon" ? "absolute inset-0 rounded-sm border-0" : "h-5 w-24 rounded-sm border",
 						isRecording
 							? "bg-primary/10 dark:bg-primary/5"
 							: size === "icon"
-								? "bg-muted/50 border-0"
+								? "border-0 bg-muted/50"
 								: "border-border bg-muted/50",
 						waveformClassName,
 					)}
@@ -189,14 +166,14 @@ export const VoiceButton = React.forwardRef<
 							smoothingTimeConstant={0.85}
 							height={20}
 							mode="static"
-							className="animate-in fade-in absolute inset-0 h-full w-full duration-300"
+							className="fade-in absolute inset-0 h-full w-full animate-in duration-300"
 						/>
 					)}
 
 					{shouldShowTrailing && (
-						<div className="animate-in fade-in absolute inset-0 flex items-center justify-center duration-300">
+						<div className="fade-in absolute inset-0 flex animate-in items-center justify-center duration-300">
 							{typeof trailing === "string" ? (
-								<span className="text-muted-foreground px-1.5 font-mono text-[10px] font-medium select-none">
+								<span className="select-none px-1.5 font-medium font-mono text-[10px] text-muted-foreground">
 									{trailing}
 								</span>
 							) : (
@@ -205,18 +182,15 @@ export const VoiceButton = React.forwardRef<
 						</div>
 					)}
 
-					{!shouldShowWaveform &&
-						!shouldShowTrailing &&
-						icon &&
-						size === "icon" && (
-							<div className="animate-in fade-in absolute inset-0 flex items-center justify-center duration-300">
-								{icon}
-							</div>
-						)}
+					{!shouldShowWaveform && !shouldShowTrailing && icon && size === "icon" && (
+						<div className="fade-in absolute inset-0 flex animate-in items-center justify-center duration-300">
+							{icon}
+						</div>
+					)}
 
 					{isSuccess && showFeedback && (
-						<div className="animate-in fade-in bg-background/80 absolute inset-0 flex items-center justify-center duration-300">
-							<span className="text-primary text-[10px] font-medium">
+						<div className="fade-in absolute inset-0 flex animate-in items-center justify-center bg-background/80 duration-300">
+							<span className="font-medium text-[10px] text-primary">
 								<CheckIcon className="size-3.5" />
 							</span>
 						</div>
@@ -224,8 +198,8 @@ export const VoiceButton = React.forwardRef<
 
 					{/* Error Icon */}
 					{isError && showFeedback && (
-						<div className="animate-in fade-in bg-background/80 absolute inset-0 flex items-center justify-center duration-300">
-							<span className="text-destructive text-[10px] font-medium">
+						<div className="fade-in absolute inset-0 flex animate-in items-center justify-center bg-background/80 duration-300">
+							<span className="font-medium text-[10px] text-destructive">
 								<XIcon className="size-3.5" />
 							</span>
 						</div>

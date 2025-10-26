@@ -1,21 +1,12 @@
-import * as React from "react";
 import { useConversation } from "@elevenlabs/react";
-import {
-	ArrowUpIcon,
-	ChevronDown,
-	Keyboard,
-	Mic,
-	MicOff,
-	PhoneIcon,
-	XIcon,
-} from "lucide-react";
-
-import { cn } from "@/lib/utils";
+import { ArrowUpIcon, ChevronDown, Keyboard, Mic, MicOff, PhoneIcon, XIcon } from "lucide-react";
+import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { LiveWaveform } from "@/components/ui/live-waveform";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
 export interface ConversationBarProps {
 	/**
@@ -59,10 +50,7 @@ export interface ConversationBarProps {
 	onSendMessage?: (message: string) => void;
 }
 
-export const ConversationBar = React.forwardRef<
-	HTMLDivElement,
-	ConversationBarProps
->(
+export const ConversationBar = React.forwardRef<HTMLDivElement, ConversationBarProps>(
 	(
 		{
 			agentId,
@@ -103,9 +91,7 @@ export const ConversationBar = React.forwardRef<
 				const errorObj =
 					error instanceof Error
 						? error
-						: new Error(
-								typeof error === "string" ? error : JSON.stringify(error),
-							);
+						: new Error(typeof error === "string" ? error : JSON.stringify(error));
 				onError?.(errorObj);
 			},
 		});
@@ -201,10 +187,7 @@ export const ConversationBar = React.forwardRef<
 		}, []);
 
 		return (
-			<div
-				ref={ref}
-				className={cn("flex w-full items-end justify-center p-4", className)}
-			>
+			<div ref={ref} className={cn("flex w-full items-end justify-center p-4", className)}>
 				<Card className="m-0 w-full gap-0 border p-0 shadow-lg">
 					<div className="flex flex-col-reverse">
 						<div>
@@ -225,9 +208,7 @@ export const ConversationBar = React.forwardRef<
 												)}
 											>
 												<LiveWaveform
-													key={
-														agentState === "disconnected" ? "idle" : "active"
-													}
+													key={agentState === "disconnected" ? "idle" : "active"}
 													active={isConnected && !isMuted}
 													processing={agentState === "connecting"}
 													barWidth={3}
@@ -246,7 +227,7 @@ export const ConversationBar = React.forwardRef<
 												/>
 												{agentState === "disconnected" && (
 													<div className="absolute inset-0 flex items-center justify-center">
-														<span className="text-foreground/50 text-[10px] font-medium">
+														<span className="font-medium text-[10px] text-foreground/50">
 															Customer Support
 														</span>
 													</div>
@@ -276,22 +257,18 @@ export const ConversationBar = React.forwardRef<
 									>
 										<Keyboard
 											className={
-												"h-5 w-5 transform-gpu transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] " +
-												(keyboardOpen
-													? "scale-75 opacity-0"
-													: "scale-100 opacity-100")
+												"h-5 w-5 transform-gpu transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]" +
+												(keyboardOpen ? "scale-75 opacity-0" : "scale-100 opacity-100")
 											}
 										/>
 										<ChevronDown
 											className={
-												"absolute inset-0 m-auto h-5 w-5 transform-gpu transition-all delay-50 duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] " +
-												(keyboardOpen
-													? "scale-100 opacity-100"
-													: "scale-75 opacity-0")
+												"absolute inset-0 m-auto h-5 w-5 transform-gpu transition-all delay-50 duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)]" +
+												(keyboardOpen ? "scale-100 opacity-100" : "scale-75 opacity-0")
 											}
 										/>
 									</Button>
-									<Separator orientation="vertical" className="mx-1 -my-2.5" />
+									<Separator orientation="vertical" className="-my-2.5 mx-1" />
 									<Button
 										variant="ghost"
 										size="icon"

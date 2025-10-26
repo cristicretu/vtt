@@ -1,18 +1,18 @@
-import { httpRouter } from "convex/server";
-import { auth } from "./auth";
-import { ActionCtx, httpAction } from "@cvx/_generated/server";
-import { ERRORS } from "~/errors";
-import { stripe } from "@cvx/stripe";
-import { STRIPE_WEBHOOK_SECRET } from "@cvx/env";
-import { z } from "zod";
 import { internal } from "@cvx/_generated/api";
-import { Currency, Interval, PLANS } from "@cvx/schema";
+import type { Doc } from "@cvx/_generated/dataModel";
+import { type ActionCtx, httpAction } from "@cvx/_generated/server";
 import {
 	sendSubscriptionErrorEmail,
 	sendSubscriptionSuccessEmail,
 } from "@cvx/email/templates/subscriptionEmail";
-import Stripe from "stripe";
-import { Doc } from "@cvx/_generated/dataModel";
+import { STRIPE_WEBHOOK_SECRET } from "@cvx/env";
+import { type Currency, type Interval, PLANS } from "@cvx/schema";
+import { stripe } from "@cvx/stripe";
+import { httpRouter } from "convex/server";
+import type Stripe from "stripe";
+import { z } from "zod";
+import { ERRORS } from "~/errors";
+import { auth } from "./auth";
 
 const http = httpRouter();
 
@@ -83,9 +83,7 @@ const handleCheckoutSessionCompleted = async (
 	}
 
 	const freeSubscriptionStripeId =
-		user.subscription.planKey === PLANS.FREE
-			? user.subscription.stripeId
-			: undefined;
+		user.subscription.planKey === PLANS.FREE ? user.subscription.stripeId : undefined;
 
 	const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
@@ -98,15 +96,13 @@ const handleCheckoutSessionCompleted = async (
 
 	// Cancel free subscription. — User upgraded to a paid plan.
 	// Not required, but it's a good practice to keep just a single active plan.
-	const subscriptions = (
-		await stripe.subscriptions.list({ customer: customerId })
-	).data.map((sub) => sub.items);
+	const subscriptions = (await stripe.subscriptions.list({ customer: customerId })).data.map(
+		(sub) => sub.items,
+	);
 
 	if (subscriptions.length > 1) {
 		const freeSubscription = subscriptions.find((sub) =>
-			sub.data.some(
-				({ subscription }) => subscription === freeSubscriptionStripeId,
-			),
+			sub.data.some(({ subscription }) => subscription === freeSubscriptionStripeId),
 		);
 		if (freeSubscription) {
 			await stripe.subscriptions.cancel(freeSubscription?.data[0].subscription);
@@ -143,9 +139,7 @@ const handleCustomerSubscriptionUpdated = async (
 	event: Stripe.CustomerSubscriptionUpdatedEvent,
 ) => {
 	const subscription = event.data.object;
-	const { customer: customerId } = z
-		.object({ customer: z.string() })
-		.parse(subscription);
+	const { customer: customerId } = z.object({ customer: z.string() }).parse(subscription);
 
 	const user = await ctx.runQuery(internal.stripe.PREAUTH_getUserByCustomerId, {
 		customerId,

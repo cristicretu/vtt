@@ -1,17 +1,12 @@
-import Stripe from "stripe";
-import {
-	action,
-	internalAction,
-	internalMutation,
-	internalQuery,
-} from "@cvx/_generated/server";
-import { v } from "convex/values";
-import { ERRORS } from "~/errors";
+import { action, internalAction, internalMutation, internalQuery } from "@cvx/_generated/server";
 import { auth } from "@cvx/auth";
-import { currencyValidator, intervalValidator, PLANS } from "@cvx/schema";
-import { api, internal } from "~/convex/_generated/api";
 import { SITE_URL, STRIPE_SECRET_KEY } from "@cvx/env";
+import { currencyValidator, intervalValidator, PLANS } from "@cvx/schema";
+import { v } from "convex/values";
 import { asyncMap } from "convex-helpers";
+import Stripe from "stripe";
+import { api, internal } from "~/convex/_generated/api";
+import { ERRORS } from "~/errors";
 
 /**
  * TODO: Uncomment to require Stripe keys.
@@ -70,8 +65,7 @@ export const PREAUTH_createStripeCustomer = internalAction({
 		const user = await ctx.runQuery(internal.stripe.PREAUTH_getUserById, {
 			userId: args.userId,
 		});
-		if (!user || user.customerId)
-			throw new Error(ERRORS.STRIPE_CUSTOMER_NOT_CREATED);
+		if (!user || user.customerId) throw new Error(ERRORS.STRIPE_CUSTOMER_NOT_CREATED);
 
 		const customer = await stripe.customers
 			.create({ email: user.email, name: user.username })
@@ -379,9 +373,9 @@ export const cancelCurrentUserSubscriptions = internalAction({
 		if (!user) {
 			throw new Error(ERRORS.STRIPE_SOMETHING_WENT_WRONG);
 		}
-		const subscriptions = (
-			await stripe.subscriptions.list({ customer: user.customerId })
-		).data.map((sub) => sub.items);
+		const subscriptions = (await stripe.subscriptions.list({ customer: user.customerId })).data.map(
+			(sub) => sub.items,
+		);
 
 		await asyncMap(subscriptions, async (subscription) => {
 			await stripe.subscriptions.cancel(subscription.data[0].subscription);

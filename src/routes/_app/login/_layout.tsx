@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
-import { Logo } from "@/components/ui/logo";
 import { useConvexAuth } from "convex/react";
+import { Logo } from "@/components/ui/logo";
 
 const HOME_PATH = "/";
 
@@ -18,8 +18,7 @@ const QUOTES = [
 		author: "Peter Drucker",
 	},
 	{
-		quote:
-			"The only limit to our realization of tomorrow will be our doubts of today.",
+		quote: "The only limit to our realization of tomorrow will be our doubts of today.",
 		author: "Franklin D. Roosevelt",
 	},
 	{
@@ -42,11 +41,8 @@ function LoginLayout() {
 	return (
 		<div className="flex h-screen w-full">
 			{/* Mobile Logo */}
-			<div className="absolute left-1/2 top-10 z-10 mx-auto flex -translate-x-1/2 transform lg:hidden">
-				<Link
-					to={HOME_PATH}
-					className="flex h-10 flex-col items-center justify-center gap-2"
-				>
+			<div className="-translate-x-1/2 absolute top-10 left-1/2 z-10 mx-auto flex transform lg:hidden">
+				<Link to={HOME_PATH} className="flex h-10 flex-col items-center justify-center gap-2">
 					<Logo />
 				</Link>
 			</div>
@@ -58,23 +54,21 @@ function LoginLayout() {
 				</Link>
 
 				<div className="z-10 flex flex-col items-start gap-4">
-					<blockquote className="border-l-4 border-primary pl-4">
-						<p className="text-lg font-normal italic text-primary">
-							"{randomQuote.quote}"
-						</p>
-						<footer className="mt-2 text-base font-medium text-primary/60">
+					<blockquote className="border-primary border-l-4 pl-4">
+						<p className="font-normal text-lg text-primary italic">"{randomQuote.quote}"</p>
+						<footer className="mt-2 font-medium text-base text-primary/60">
 							— {randomQuote.author}
 						</footer>
 					</blockquote>
 				</div>
 
 				{/* Background Pattern */}
-				<div className="base-grid absolute left-0 top-0 z-0 h-full w-full opacity-40" />
+				<div className="base-grid absolute top-0 left-0 z-0 h-full w-full opacity-40" />
 				<div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
 			</div>
 
 			{/* Right Panel - Content */}
-			<div className="flex h-full w-full flex-col border-l border-primary/10 bg-card lg:w-[50%]">
+			<div className="flex h-full w-full flex-col border-primary/10 border-l bg-card lg:w-[50%]">
 				<Outlet />
 			</div>
 		</div>

@@ -1,9 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import { Check, ChevronsUpDown, Mic, MicOff } from "lucide-react";
-
-import { cn } from "@/lib/utils";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -13,6 +11,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LiveWaveform } from "@/components/ui/live-waveform";
+import { cn } from "@/lib/utils";
 
 export interface AudioDevice {
 	deviceId: string;
@@ -37,8 +36,7 @@ export function MicSelector({
 	disabled,
 	className,
 }: MicSelectorProps) {
-	const { devices, loading, error, hasPermission, loadDevices } =
-		useAudioDevices();
+	const { devices, loading, error, hasPermission, loadDevices } = useAudioDevices();
 	const [selectedDevice, setSelectedDevice] = useState<string>(value || "");
 	const [internalMuted, setInternalMuted] = useState(false);
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -98,10 +96,7 @@ export function MicSelector({
 				<Button
 					variant="ghost"
 					size="sm"
-					className={cn(
-						"hover:bg-accent flex w-48 cursor-pointer items-center gap-1.5",
-						className,
-					)}
+					className={cn("flex w-48 cursor-pointer items-center gap-1.5 hover:bg-accent", className)}
 					disabled={loading || disabled}
 				>
 					{isMuted ? (
@@ -109,9 +104,7 @@ export function MicSelector({
 					) : (
 						<Mic className="h-4 w-4 flex-shrink-0" />
 					)}
-					<span className="flex-1 truncate text-left">
-						{currentDevice.label}
-					</span>
+					<span className="flex-1 truncate text-left">{currentDevice.label}</span>
 					<ChevronsUpDown className="h-3 w-3 flex-shrink-0" />
 				</Button>
 			</DropdownMenuTrigger>
@@ -129,9 +122,7 @@ export function MicSelector({
 							className="flex items-center justify-between"
 						>
 							<span className="truncate">{device.label}</span>
-							{selectedDevice === device.deviceId && (
-								<Check className="h-4 w-4 flex-shrink-0" />
-							)}
+							{selectedDevice === device.deviceId && <Check className="h-4 w-4 flex-shrink-0" />}
 						</DropdownMenuItem>
 					))
 				)}
@@ -148,14 +139,10 @@ export function MicSelector({
 								}}
 								className="h-8 gap-2"
 							>
-								{isMuted ? (
-									<MicOff className="h-4 w-4" />
-								) : (
-									<Mic className="h-4 w-4" />
-								)}
+								{isMuted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
 								<span className="text-sm">{isMuted ? "Unmute" : "Mute"}</span>
 							</Button>
-							<div className="bg-accent ml-auto w-16 overflow-hidden rounded-md p-1.5">
+							<div className="ml-auto w-16 overflow-hidden rounded-md bg-accent p-1.5">
 								<LiveWaveform
 									active={isPreviewActive}
 									deviceId={selectedDevice || defaultDeviceId}
@@ -189,8 +176,7 @@ export function useAudioDevices() {
 			const audioInputs = deviceList
 				.filter((device) => device.kind === "audioinput")
 				.map((device) => {
-					let cleanLabel =
-						device.label || `Microphone ${device.deviceId.slice(0, 8)}`;
+					let cleanLabel = device.label || `Microphone ${device.deviceId.slice(0, 8)}`;
 					cleanLabel = cleanLabel.replace(/\s*\([^)]*\)/g, "").trim();
 
 					return {
@@ -202,9 +188,7 @@ export function useAudioDevices() {
 
 			setDevices(audioInputs);
 		} catch (err) {
-			setError(
-				err instanceof Error ? err.message : "Failed to get audio devices",
-			);
+			setError(err instanceof Error ? err.message : "Failed to get audio devices");
 			console.error("Error getting audio devices:", err);
 		} finally {
 			setLoading(false);
@@ -228,8 +212,7 @@ export function useAudioDevices() {
 			const audioInputs = deviceList
 				.filter((device) => device.kind === "audioinput")
 				.map((device) => {
-					let cleanLabel =
-						device.label || `Microphone ${device.deviceId.slice(0, 8)}`;
+					let cleanLabel = device.label || `Microphone ${device.deviceId.slice(0, 8)}`;
 					cleanLabel = cleanLabel.replace(/\s*\([^)]*\)/g, "").trim();
 
 					return {
@@ -242,9 +225,7 @@ export function useAudioDevices() {
 			setDevices(audioInputs);
 			setHasPermission(true);
 		} catch (err) {
-			setError(
-				err instanceof Error ? err.message : "Failed to get audio devices",
-			);
+			setError(err instanceof Error ? err.message : "Failed to get audio devices");
 			console.error("Error getting audio devices:", err);
 		} finally {
 			setLoading(false);
@@ -267,10 +248,7 @@ export function useAudioDevices() {
 		navigator.mediaDevices.addEventListener("devicechange", handleDeviceChange);
 
 		return () => {
-			navigator.mediaDevices.removeEventListener(
-				"devicechange",
-				handleDeviceChange,
-			);
+			navigator.mediaDevices.removeEventListener("devicechange", handleDeviceChange);
 		};
 	}, [hasPermission, loadDevicesWithPermission, loadDevicesWithoutPermission]);
 
