@@ -84,8 +84,13 @@ const schema = defineSchema({
 		name: v.string(),
 		surname: v.string(),
 		dateOfBirth: v.number(), // Unix timestamp for date of birth
+		email: v.optional(v.string()),
+		phone: v.optional(v.string()),
 		cnp: v.string(), // Romanian Personal Numerical Code
-	}).index("cnp", ["cnp"]),
+	})
+		.index("cnp", ["cnp"])
+		.index("email", ["email"])
+		.index("phone", ["phone"]),
 
 	// Diagnosis documents table, linking a specific doctor to a specific patient
 	// for a single consultation.
