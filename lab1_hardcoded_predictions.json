@@ -1,10 +1,10 @@
 {
-  "timestamp": "2025-10-18T09:53:06.616740",
-  "lab": "Lab 1 - Hardcoded AI Prediction",
-  "description": "Simulated AI prediction for medical consultation",
-  "predictions": {
-    "consultatie.wav": {
-      "transcript": "Aorta la inel 8, aorta la sinusuri 12, aorta ascendentă 10, AS 13, VD 6, SIV 3, VS 20 pe 12, perete posterior 4, fracție de ejecție 60%."
-    }
-  }
+	"timestamp": "2025-10-18T09:53:06.616740",
+	"lab": "Lab 1 - Hardcoded AI Prediction",
+	"description": "Simulated AI prediction for medical consultation",
+	"predictions": {
+		"consultatie.wav": {
+			"transcript": "Aorta la inel 8, aorta la sinusuri 12, aorta ascendentă 10, AS 13, VD 6, SIV 3, VS 20 pe 12, perete posterior 4, fracție de ejecție 60%."
+		}
+	}
 }
