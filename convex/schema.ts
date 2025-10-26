@@ -54,6 +54,10 @@ const schema = defineSchema({
 		phoneVerificationTime: v.optional(v.number()),
 		isAnonymous: v.optional(v.boolean()),
 		customerId: v.optional(v.string()),
+		// Doctor-specific fields from the new schema
+		surname: v.optional(v.string()),
+		clinic: v.optional(v.string()),
+		specialisation: v.optional(v.string()),
 	})
 		.index("email", ["email"])
 		.index("customerId", ["customerId"]),
@@ -83,6 +87,39 @@ const schema = defineSchema({
 	})
 		.index("userId", ["userId"])
 		.index("stripeId", ["stripeId"]),
+
+	// Patients table. A patient is not tied to a single doctor.
+	patients: defineTable({
+		name: v.string(),
+		surname: v.string(),
+		dateOfBirth: v.number(), // Unix timestamp for date of birth
+		cnp: v.string(), // Romanian Personal Numerical Code
+	}).index("cnp", ["cnp"]),
+
+	// Diagnosis documents table, linking a specific doctor to a specific patient
+	// for a single consultation.
+	diagnosisDocuments: defineTable({
+		doctorId: v.id("users"), // Links to the 'users' (doctors) table
+		patientId: v.id("patients"),
+		templateId: v.optional(v.id("documentTemplates")), // Link to the template used
+		transcript: v.string(),
+		structuredOutput: v.any(), // To store JSON from the LLM
+		dateCreated: v.number(), // Unix timestamp for creation date
+		dateLastModified: v.number(), // Unix timestamp for last modification date
+	})
+		.index("doctorId", ["doctorId"])
+		.index("patientId", ["patientId"]),
+
+	// Table for storing document templates created by doctors
+	documentTemplates: defineTable({
+		name: v.string(),
+		// TODO: This could be a more structured object
+		// depending on how the template is structured in the future
+		content: v.string(), // The content of the template
+		doctorId: v.id("users"), // Link to the doctor who created the template
+		dateCreated: v.number(), // Unix timestamp for creation date
+		dateLastModified: v.number(), // Unix timestamp for last modification date
+	}).index("doctorId", ["doctorId"]),
 });
 
 export default schema;
