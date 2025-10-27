@@ -98,13 +98,40 @@ const schema = defineSchema({
 		doctorId: v.id("users"), // Links to the 'users' (doctors) table
 		patientId: v.id("patients"),
 		templateId: v.optional(v.id("documentTemplates")), // Link to the template used
-		transcript: v.string(),
-		structuredOutput: v.any(), // To store JSON from the LLM
+		storageId: v.optional(v.id("_storage")), // Reference to the audio file in Convex storage
+		transcript: v.optional(v.string()), // Optional until generated
+		transcriptStatus: v.optional(
+			v.union(
+				v.literal("pending"),
+				v.literal("processing"),
+				v.literal("completed"),
+				v.literal("failed"),
+			),
+		),
+		structuredOutput: v.optional(v.any()), // To store JSON from the LLM, optional until generated
+		structuredOutputStatus: v.optional(
+			v.union(
+				v.literal("pending"),
+				v.literal("processing"),
+				v.literal("completed"),
+				v.literal("failed"),
+			),
+		),
+		audioMetadata: v.optional(
+			v.object({
+				duration: v.optional(v.number()), // Duration in seconds
+				fileSize: v.optional(v.number()), // File size in bytes
+				format: v.optional(v.string()), // File format (e.g., "audio/webm", "audio/mp3")
+				mimeType: v.optional(v.string()), // MIME type
+			}),
+		),
 		dateCreated: v.number(), // Unix timestamp for creation date
 		dateLastModified: v.number(), // Unix timestamp for last modification date
 	})
 		.index("doctorId", ["doctorId"])
-		.index("patientId", ["patientId"]),
+		.index("patientId", ["patientId"])
+		.index("transcriptStatus", ["transcriptStatus"])
+		.index("structuredOutputStatus", ["structuredOutputStatus"]),
 
 	// Table for storing document templates created by doctors
 	documentTemplates: defineTable({
