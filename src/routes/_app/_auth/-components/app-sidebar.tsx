@@ -1,8 +1,23 @@
 "use client";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ChevronsLeft, Home, Plus, Search, X } from "lucide-react";
+import {
+	AudioLinesIcon,
+	ChevronsLeft,
+	CircleUserRoundIcon,
+	FileUpIcon,
+	Home,
+	Plus,
+	Search,
+	X,
+} from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
 	Sidebar,
@@ -95,17 +110,33 @@ export function AppSidebar({ user }: AppSidebarProps) {
 							>
 								<ChevronsLeft />
 							</Button>
-							<Button
-								variant="ghost"
-								size="icon"
-								className="h-8 w-8"
-								asChild
-								title="Add new patient"
-							>
-								<Link to="/dashboard">
-									<Plus />
-								</Link>
-							</Button>
+							<DropdownMenu>
+								<DropdownMenuTrigger asChild>
+									<Button variant="ghost" size="icon" className="h-8 w-8" title="Add new">
+										<Plus className="h-4 w-4" />
+									</Button>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent side="bottom" align="start">
+									<DropdownMenuItem asChild>
+										<Link to="/dashboard" className="cursor-pointer">
+											<CircleUserRoundIcon className="h-4 w-4" />
+											<span>New patient</span>
+										</Link>
+									</DropdownMenuItem>
+									<DropdownMenuItem asChild>
+										<Link to="/dashboard" className="cursor-pointer">
+											<AudioLinesIcon className="h-4 w-4" />
+											<span>New recording</span>
+										</Link>
+									</DropdownMenuItem>
+									<DropdownMenuItem asChild>
+										<Link to="/dashboard" className="cursor-pointer">
+											<FileUpIcon className="h-4 w-4" />
+											<span>Upload file</span>
+										</Link>
+									</DropdownMenuItem>
+								</DropdownMenuContent>
+							</DropdownMenu>
 						</div>
 					</div>
 				</SidebarHeader>
