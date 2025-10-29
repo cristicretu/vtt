@@ -2,7 +2,7 @@
 
 import { format } from "date-fns";
 import { Calendar, CalendarIcon, FileText, Mail, MapPin, Phone, Save, User, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +27,18 @@ export function PatientInformation({ patient }: PatientInformationProps) {
 		medicalHistory: patient.medicalHistory || "",
 	});
 	const [dateOfBirth, setDateOfBirth] = useState<Date>(new Date(patient.dateOfBirth));
+
+	useEffect(() => {
+		setFormData({
+			fullName: patient.fullName,
+			email: patient.email,
+			phone: patient.phone,
+			address: patient.address,
+			medicalHistory: patient.medicalHistory || "",
+		});
+		setDateOfBirth(new Date(patient.dateOfBirth));
+		setEditingField(null);
+	}, [patient]);
 
 	const handleFieldClick = (fieldName: string) => {
 		setEditingField(fieldName);
