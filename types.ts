@@ -12,6 +12,10 @@ export type Patient = {
 	id: string;
 	fullName: string;
 	dateOfBirth: string;
+	email: string;
+	phone: string;
+	address: string;
+	medicalHistory?: string;
 };
 
 export type Entry = {
