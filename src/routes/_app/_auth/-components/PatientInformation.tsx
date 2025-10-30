@@ -1,5 +1,3 @@
-"use client";
-
 import { format } from "date-fns";
 import { Calendar, CalendarIcon, FileText, Mail, MapPin, Phone, Save, User, X } from "lucide-react";
 import { useEffect, useState } from "react";

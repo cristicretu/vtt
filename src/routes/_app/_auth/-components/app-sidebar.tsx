@@ -1,4 +1,3 @@
-"use client";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
 	AudioLinesIcon,
@@ -90,7 +89,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
 	return (
 		<>
-			{shouldShowTrigger && <SidebarTrigger className="absolute top-0 left-0 z-50" />}
+			{shouldShowTrigger && <SidebarTrigger className="fixed top-0 left-0 z-50" />}
 			<Sidebar collapsible="offcanvas" className="group group/sidebar">
 				<SidebarHeader className="border-b">
 					<div className="flex items-center justify-between gap-2 px-2 py-1">
