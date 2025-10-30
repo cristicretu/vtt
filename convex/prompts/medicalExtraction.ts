@@ -60,57 +60,31 @@ FORMATARE:
 - Pentru valori numerice, include unitatea de măsură
 - Datele să fie în format DD.MM.YYYY sau text descriptiv (ex: "peste 4 săptămâni")
 
-EXEMPLE DE EXTRAGERE:
+EXEMPLU DE EXTRAGERE:
 
-Exemplu 1 - Consultație cardiologie:
-Transcript: "Pacientul se prezintă cu dureri toracice de 2 zile. TA: 140/90 mmHg, FC: 88 bpm. La auscultație: zgomote cardiace regulate. ECG: ritm sinusal normal. Diagnostic: Hipertensiune arterială grad I. Tratament: Enalapril 10mg, 1cp/zi dimineața. Control peste 1 lună."
+Consultație ortopedie:
+Transcript: "Pacientul se prezintă cu durere acută în regiunea lombară de aproximativ 3 zile. Nu are antecedente de traume. Durerea este descrisă ca fiind ascuțită și radiază pe piciorul stâng. Pacientul raportează dificultăți de somn și mobilitate limitată.
 
-Output:
-{
-  "diagnosis": {
-    "main": "Hipertensiune arterială grad I"
-  },
-  "complaints": {
-    "chief": "Dureri toracice",
-    "duration": "2 zile"
-  },
-  "examination": {
-    "vitalSigns": {
-      "bloodPressure": "140/90 mmHg",
-      "heartRate": 88
-    },
-    "systemicExamination": {
-      "cardiovascular": "Zgomote cardiace regulate"
-    }
-  },
-  "investigations": {
-    "other": [{
-      "type": "ECG",
-      "findings": "Ritm sinusal normal"
-    }]
-  },
-  "treatment": {
-    "medications": [{
-      "name": "Enalapril",
-      "dosage": "10mg",
-      "frequency": "1cp/zi",
-      "instructions": "dimineața"
-    }]
-  },
-  "recommendations": {
-    "followUp": {
-      "date": "peste 1 lună"
-    }
-  }
-}
+Examen fizic:
+- Durere la palpare L4-L5
+- Test Lasègue pozitiv la stânga
+- Tensiune arterială: 135/80 mmHg
+- Frecvență cardiacă: 78 bpm
 
-Exemplu 2 - Consultație ortopedie:
-Transcript: "Pacientul se prezintă cu durere acută în regiunea lombară de aproximativ 3 zile. Nu are antecedente de traume. Durerea este descrisă ca fiind ascuțită și radiază pe piciorul stâng. Pacientul raportează dificultăți de somn și mobilitate limitată. Examen fizic: durere la palpare L4-L5, test Lasègue pozitiv stânga. I s-au prescris medicamente antiinflamatoare: Ibuprofen 400mg, 3x/zi după mese timp de 7 zile, și s-a recomandat fizioterapie."
+Diagnostic: Lombosciatalgie acută stângă
+
+Tratament prescris:
+- Ibuprofen 400mg, 3 comprimate pe zi după mese, timp de 7 zile
+- Repaus relativ
+
+Recomandări:
+- Fizioterapie după ameliorarea durerii acute
+- Control peste 1 săptămână"
 
 Output:
 {
   "diagnosis": {
-    "main": "Lombosciatalgie acută"
+    "main": "Lombosciatalgie acută stângă"
   },
   "complaints": {
     "chief": "Durere acută în regiunea lombară",
@@ -126,19 +100,28 @@ Output:
     "presentIllness": "Nu are antecedente de traume"
   },
   "examination": {
+    "vitalSigns": {
+      "bloodPressure": "135/80 mmHg",
+      "heartRate": 78
+    },
     "systemicExamination": {
-      "musculoscheletal": "Durere la palpare L4-L5, test Lasègue pozitiv stânga"
+      "musculoscheletal": "Durere la palpare L4-L5, test Lasègue pozitiv la stânga"
     }
   },
   "treatment": {
     "medications": [{
       "name": "Ibuprofen",
       "dosage": "400mg",
-      "frequency": "3x/zi",
+      "frequency": "3 comprimate pe zi",
       "duration": "7 zile",
       "instructions": "după mese"
     }],
-    "nonPharmacological": ["Fizioterapie"]
+    "nonPharmacological": ["Repaus relativ", "Fizioterapie după ameliorarea durerii acute"]
+  },
+  "recommendations": {
+    "followUp": {
+      "date": "peste 1 săptămână"
+    }
   }
 }
 
@@ -149,37 +132,61 @@ IMPORTANT:
 - Nu include comentarii în JSON
 `;
 
-export function generateExtractionPrompt(transcript: string, template?: string): string {
-	const userPrompt = `
+export function generateExtractionPrompt(
+  transcript: string,
+  template?: string
+): string {
+  const userPrompt = `
 TRANSCRIPȚIA CONSULTAȚIEI MEDICALE:
 ${transcript}
 
-${template ? `\nTEMPLATE PREFERAT (folosește această structură dacă este relevantă):\n${template}` : ""}
+${template ? `\nTEMPLATE PREFERAT (folosește această structură dacă este relevantă):\n${template}` : ''}
 
 Analizează transcripția de mai sus și extrage toate informațiile medicale relevante într-un obiect JSON structurat conform schemei descrise în instrucțiuni.
 
 Returnează DOAR obiectul JSON, fără niciun text suplimentar înaintea sau după JSON.
 `;
 
-	return userPrompt;
+  return userPrompt;
 }
 
 export const TEMPLATES = {
-	CARDIOLOGIE: `{
-  "diagnosis": { "main": "..." },
+  CARDIOLOGIE: `{
+  "diagnosis": {
+    "main": "...",
+    "additional": [...],
+    "icd10Code": "..."
+  },
+  "complaints": {
+    "chief": "...",
+    "symptoms": [...],
+    "duration": "...",
+    "severity": "ușoară|moderată|severă|critică"
+  },
   "examination": {
+    "general": "...",
     "vitalSigns": {
       "bloodPressure": "...",
-      "heartRate": ...
+      "heartRate": ...,
+      "temperature": ...,
+      "respiratoryRate": ...,
+      "oxygenSaturation": ...
     },
     "systemicExamination": {
       "cardiovascular": "..."
     }
   },
   "investigations": {
+    "laboratory": [{
+      "test": "...",
+      "result": "...",
+      "unit": "...",
+      "normalRange": "..."
+    }],
     "imaging": [{
       "type": "Ecocardiografie",
-      "findings": "..."
+      "findings": "...",
+      "date": "..."
     }],
     "other": [{
       "type": "ECG",
@@ -187,87 +194,223 @@ export const TEMPLATES = {
     }]
   },
   "treatment": {
-    "medications": [...]
+    "medications": [{
+      "name": "...",
+      "dosage": "...",
+      "frequency": "...",
+      "duration": "...",
+      "route": "...",
+      "instructions": "..."
+    }],
+    "procedures": [...],
+    "nonPharmacological": [...]
   },
   "recommendations": {
-    "followUp": { "date": "..." }
+    "lifestyle": [...],
+    "diet": [...],
+    "followUp": {
+      "date": "...",
+      "reason": "...",
+      "specialist": "..."
+    },
+    "additionalTests": [...],
+    "warnings": [...]
   }
 }`,
 
-	ORTOPEDIE: `{
-  "diagnosis": { "main": "..." },
+  ORTOPEDIE: `{
+  "diagnosis": {
+    "main": "...",
+    "additional": [...],
+    "icd10Code": "..."
+  },
   "complaints": {
     "chief": "...",
     "symptoms": [...],
-    "duration": "..."
+    "duration": "...",
+    "severity": "ușoară|moderată|severă|critică"
+  },
+  "history": {
+    "presentIllness": "...",
+    "pastMedical": [...],
+    "familyHistory": [...],
+    "allergies": [...],
+    "medications": [...]
   },
   "examination": {
+    "general": "...",
+    "vitalSigns": {
+      "bloodPressure": "...",
+      "heartRate": ...,
+      "temperature": ...,
+      "respiratoryRate": ...,
+      "oxygenSaturation": ...
+    },
     "systemicExamination": {
       "musculoscheletal": "..."
     }
   },
   "investigations": {
+    "laboratory": [{
+      "test": "...",
+      "result": "...",
+      "unit": "...",
+      "normalRange": "..."
+    }],
     "imaging": [{
       "type": "Radiografie",
+      "findings": "...",
+      "date": "..."
+    }],
+    "other": [{
+      "type": "...",
       "findings": "..."
     }]
   },
   "treatment": {
-    "medications": [...],
+    "medications": [{
+      "name": "...",
+      "dosage": "...",
+      "frequency": "...",
+      "duration": "...",
+      "route": "...",
+      "instructions": "..."
+    }],
+    "procedures": [...],
     "nonPharmacological": [...]
-  }
-}`,
-
-	MEDICINA_INTERNA: `{
-  "diagnosis": {
-    "main": "...",
-    "additional": [...]
-  },
-  "complaints": {
-    "chief": "...",
-    "symptoms": [...]
-  },
-  "history": {
-    "pastMedical": [...],
-    "medications": [...]
-  },
-  "examination": {
-    "general": "...",
-    "vitalSigns": {...}
-  },
-  "investigations": {
-    "laboratory": [...],
-    "imaging": [...]
-  },
-  "treatment": {
-    "medications": [...]
   },
   "recommendations": {
     "lifestyle": [...],
     "diet": [...],
-    "followUp": {...}
+    "followUp": {
+      "date": "...",
+      "reason": "...",
+      "specialist": "..."
+    },
+    "additionalTests": [...],
+    "warnings": [...]
   }
 }`,
 
-	PNEUMOLOGIE: `{
-  "diagnosis": { "main": "..." },
+  MEDICINA_INTERNA: `{
+  "diagnosis": {
+    "main": "...",
+    "additional": [...],
+    "icd10Code": "..."
+  },
   "complaints": {
     "chief": "...",
-    "symptoms": [...]
+    "symptoms": [...],
+    "duration": "...",
+    "severity": "ușoară|moderată|severă|critică"
+  },
+  "history": {
+    "presentIllness": "...",
+    "pastMedical": [...],
+    "familyHistory": [...],
+    "allergies": [...],
+    "medications": [...]
   },
   "examination": {
+    "general": "...",
     "vitalSigns": {
-      "oxygenSaturation": ...,
-      "respiratoryRate": ...
+      "bloodPressure": "...",
+      "heartRate": ...,
+      "temperature": ...,
+      "respiratoryRate": ...,
+      "oxygenSaturation": ...
+    },
+    "systemicExamination": {
+      "cardiovascular": "...",
+      "respiratory": "...",
+      "abdomen": "..."
+    }
+  },
+  "investigations": {
+    "laboratory": [{
+      "test": "...",
+      "result": "...",
+      "unit": "...",
+      "normalRange": "..."
+    }],
+    "imaging": [{
+      "type": "...",
+      "findings": "...",
+      "date": "..."
+    }],
+    "other": [{
+      "type": "...",
+      "findings": "..."
+    }]
+  },
+  "treatment": {
+    "medications": [{
+      "name": "...",
+      "dosage": "...",
+      "frequency": "...",
+      "duration": "...",
+      "route": "...",
+      "instructions": "..."
+    }],
+    "procedures": [...],
+    "nonPharmacological": [...]
+  },
+  "recommendations": {
+    "lifestyle": [...],
+    "diet": [...],
+    "followUp": {
+      "date": "...",
+      "reason": "...",
+      "specialist": "..."
+    },
+    "additionalTests": [...],
+    "warnings": [...]
+  }
+}`,
+
+  PNEUMOLOGIE: `{
+  "diagnosis": {
+    "main": "...",
+    "additional": [...],
+    "icd10Code": "..."
+  },
+  "complaints": {
+    "chief": "...",
+    "symptoms": [...],
+    "duration": "...",
+    "severity": "ușoară|moderată|severă|critică"
+  },
+  "history": {
+    "presentIllness": "...",
+    "pastMedical": [...],
+    "familyHistory": [...],
+    "allergies": [...],
+    "medications": [...]
+  },
+  "examination": {
+    "general": "...",
+    "vitalSigns": {
+      "bloodPressure": "...",
+      "heartRate": ...,
+      "temperature": ...,
+      "respiratoryRate": ...,
+      "oxygenSaturation": ...
     },
     "systemicExamination": {
       "respiratory": "..."
     }
   },
   "investigations": {
+    "laboratory": [{
+      "test": "...",
+      "result": "...",
+      "unit": "...",
+      "normalRange": "..."
+    }],
     "imaging": [{
       "type": "Radiografie toracică",
-      "findings": "..."
+      "findings": "...",
+      "date": "..."
     }],
     "other": [{
       "type": "Spirometrie",
@@ -275,12 +418,34 @@ export const TEMPLATES = {
     }]
   },
   "treatment": {
-    "medications": [...]
+    "medications": [{
+      "name": "...",
+      "dosage": "...",
+      "frequency": "...",
+      "duration": "...",
+      "route": "...",
+      "instructions": "..."
+    }],
+    "procedures": [...],
+    "nonPharmacological": [...]
+  },
+  "recommendations": {
+    "lifestyle": [...],
+    "diet": [...],
+    "followUp": {
+      "date": "...",
+      "reason": "...",
+      "specialist": "..."
+    },
+    "additionalTests": [...],
+    "warnings": [...]
   }
 }`,
 };
 
-export function getTemplateBySpecialization(specialization: string): string | undefined {
-	const normalized = specialization.toUpperCase().replace(/\s+/g, "_");
-	return TEMPLATES[normalized as keyof typeof TEMPLATES];
+export function getTemplateBySpecialization(
+  specialization: string
+): string | undefined {
+  const normalized = specialization.toUpperCase().replace(/\s+/g, '_');
+  return TEMPLATES[normalized as keyof typeof TEMPLATES];
 }
