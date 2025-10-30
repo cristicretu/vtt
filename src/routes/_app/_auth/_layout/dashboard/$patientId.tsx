@@ -1,11 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Calendar, FileText, Mail, MapPin, Phone, User } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PatientEntries } from "@/routes/_app/_auth/-components/PatientEntries";
+import { PatientInformation } from "@/routes/_app/_auth/-components/PatientInformation";
 import { entriesData, patientsData } from "~/types";
 
 export const Route = createFileRoute("/_app/_auth/_layout/dashboard/$patientId")({
@@ -35,72 +32,30 @@ function PatientPage() {
 	return (
 		<div className="flex h-full w-full flex-col">
 			{/* Content */}
-			<div className="flex-1 overflow-auto p-6">
-				<div className="mx-auto max-w-6xl space-y-6">
-					{/* Personal Information */}
-					<Card>
-						<CardHeader>
-							<CardTitle>Personal Information</CardTitle>
-							<CardDescription>Basic patient details and contact information</CardDescription>
-						</CardHeader>
-						<CardContent className="space-y-4">
-							<div className="grid gap-4 md:grid-cols-2">
-								<div className="flex items-start gap-3">
-									<User className="mt-0.5 h-4 w-4 text-muted-foreground" />
-									<div className="space-y-1">
-										<p className="font-medium text-sm">Full Name</p>
-										<p className="text-muted-foreground text-sm">{patient.fullName}</p>
-									</div>
-								</div>
-								<div className="flex items-start gap-3">
-									<Calendar className="mt-0.5 h-4 w-4 text-muted-foreground" />
-									<div className="space-y-1">
-										<p className="font-medium text-sm">Date of Birth</p>
-										<p className="text-muted-foreground text-sm">
-											{new Date(patient.dateOfBirth).toLocaleDateString("en-US", {
-												year: "numeric",
-												month: "long",
-												day: "numeric",
-											})}
-										</p>
-									</div>
-								</div>
-								<div className="flex items-start gap-3">
-									<Mail className="mt-0.5 h-4 w-4 text-muted-foreground" />
-									<div className="space-y-1">
-										<p className="font-medium text-sm">Email</p>
-										<p className="text-muted-foreground text-sm">{patient.email}</p>
-									</div>
-								</div>
-								<div className="flex items-start gap-3">
-									<Phone className="mt-0.5 h-4 w-4 text-muted-foreground" />
-									<div className="space-y-1">
-										<p className="font-medium text-sm">Phone</p>
-										<p className="text-muted-foreground text-sm">{patient.phone}</p>
-									</div>
-								</div>
-								<div className="flex items-start gap-3 md:col-span-2">
-									<MapPin className="mt-0.5 h-4 w-4 text-muted-foreground" />
-									<div className="space-y-1">
-										<p className="font-medium text-sm">Address</p>
-										<p className="text-muted-foreground text-sm">{patient.address}</p>
-									</div>
-								</div>
-								<Button variant="outline">Schedule Appointment</Button>
-							</div>
-						</CardContent>
-					</Card>
+			<div className="flex-1 overflow-auto p-8 md:p-6">
+				<div className="mx-auto w-full">
+					<Tabs defaultValue="information" className="w-full">
+						<TabsList className="mx-auto mb-6 grid w-full max-w-md grid-cols-2">
+							<TabsTrigger value="information">Patient Information</TabsTrigger>
+							<TabsTrigger value="recordings">Recordings</TabsTrigger>
+						</TabsList>
 
-					{/* Patient Entries */}
-					<Card>
-						<CardHeader>
-							<CardTitle>Medical Entries</CardTitle>
-							<CardDescription>Consultation records and diagnostic information</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<PatientEntries entries={patientEntries} />
-						</CardContent>
-					</Card>
+						<TabsContent value="information" className="space-y-6">
+							<PatientInformation patient={patient} />
+						</TabsContent>
+
+						<TabsContent value="recordings" className="space-y-6">
+							<Card>
+								<CardHeader>
+									<CardTitle>Medical Entries</CardTitle>
+									<CardDescription>Consultation records and diagnostic information</CardDescription>
+								</CardHeader>
+								<CardContent>
+									<PatientEntries entries={patientEntries} />
+								</CardContent>
+							</Card>
+						</TabsContent>
+					</Tabs>
 				</div>
 			</div>
 		</div>

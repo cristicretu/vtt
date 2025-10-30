@@ -1,4 +1,3 @@
-"use client";
 import { useNavigate } from "@tanstack/react-router";
 import { ChevronsUpDown, LogOut, Moon, Settings, Sun } from "lucide-react";
 import { useTheme } from "@/components/providers/theme-provider";
