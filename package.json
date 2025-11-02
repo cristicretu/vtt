@@ -88,6 +88,7 @@
 		"react": "^18.3.1",
 		"react-day-picker": "^9.11.1",
 		"react-dom": "^18.3.1",
+		"react-dropzone": "^14.3.8",
 		"react-helmet-async": "^2.0.5",
 		"react-hook-form": "^7.65.0",
 		"react-i18next": "^15.0.0",
