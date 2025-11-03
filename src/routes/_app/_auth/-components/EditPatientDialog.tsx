@@ -21,11 +21,7 @@ interface EditPatientDialogProps {
 	onOpenChange: (open: boolean) => void;
 }
 
-export function EditPatientDialog({
-	patient,
-	open,
-	onOpenChange,
-}: EditPatientDialogProps) {
+export function EditPatientDialog({ patient, open, onOpenChange }: EditPatientDialogProps) {
 	const updatePatient = useMutation(api.patients.updatePatient);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [formData, setFormData] = useState({
@@ -41,10 +37,10 @@ export function EditPatientDialog({
 	useEffect(() => {
 		if (open && patient) {
 			// Strip +407 prefix from phone if it exists
-			const phoneDigits = patient.phone?.startsWith("+407") 
-				? patient.phone.slice(4) 
+			const phoneDigits = patient.phone?.startsWith("+407")
+				? patient.phone.slice(4)
 				: patient.phone || "";
-			
+
 			setFormData({
 				name: patient.name,
 				surname: patient.surname,
@@ -77,9 +73,7 @@ export function EditPatientDialog({
 			toast.success("Patient updated successfully!");
 			onOpenChange(false);
 		} catch (error) {
-			toast.error(
-				error instanceof Error ? error.message : "Failed to update patient",
-			);
+			toast.error(error instanceof Error ? error.message : "Failed to update patient");
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -87,7 +81,7 @@ export function EditPatientDialog({
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const { name, value } = e.target;
-		
+
 		// For CNP field, only allow digits
 		if (name === "cnp") {
 			const digitsOnly = value.replace(/\D/g, "");
@@ -97,7 +91,7 @@ export function EditPatientDialog({
 			});
 			return;
 		}
-		
+
 		// For phone field, only allow digits (max 8)
 		if (name === "phone") {
 			const digitsOnly = value.replace(/\D/g, "").slice(0, 8);
@@ -107,7 +101,7 @@ export function EditPatientDialog({
 			});
 			return;
 		}
-		
+
 		setFormData({
 			...formData,
 			[name]: value,
@@ -119,9 +113,7 @@ export function EditPatientDialog({
 			<DialogContent className="max-w-2xl">
 				<DialogHeader>
 					<DialogTitle>Edit Patient Information</DialogTitle>
-					<DialogDescription>
-						Update patient details and contact information
-					</DialogDescription>
+					<DialogDescription>Update patient details and contact information</DialogDescription>
 				</DialogHeader>
 				<form onSubmit={handleSubmit} className="space-y-6">
 					<div className="grid gap-4 md:grid-cols-2">
@@ -231,4 +223,3 @@ export function EditPatientDialog({
 		</Dialog>
 	);
 }
-

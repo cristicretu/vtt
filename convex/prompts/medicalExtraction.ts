@@ -132,26 +132,23 @@ IMPORTANT:
 - Nu include comentarii în JSON
 `;
 
-export function generateExtractionPrompt(
-  transcript: string,
-  template?: string
-): string {
-  const userPrompt = `
+export function generateExtractionPrompt(transcript: string, template?: string): string {
+	const userPrompt = `
 TRANSCRIPȚIA CONSULTAȚIEI MEDICALE:
 ${transcript}
 
-${template ? `\nTEMPLATE PREFERAT (folosește această structură dacă este relevantă):\n${template}` : ''}
+${template ? `\nTEMPLATE PREFERAT (folosește această structură dacă este relevantă):\n${template}` : ""}
 
 Analizează transcripția de mai sus și extrage toate informațiile medicale relevante într-un obiect JSON structurat conform schemei descrise în instrucțiuni.
 
 Returnează DOAR obiectul JSON, fără niciun text suplimentar înaintea sau după JSON.
 `;
 
-  return userPrompt;
+	return userPrompt;
 }
 
 export const TEMPLATES = {
-  CARDIOLOGIE: `{
+	CARDIOLOGIE: `{
   "diagnosis": {
     "main": "...",
     "additional": [...],
@@ -218,7 +215,7 @@ export const TEMPLATES = {
   }
 }`,
 
-  ORTOPEDIE: `{
+	ORTOPEDIE: `{
   "diagnosis": {
     "main": "...",
     "additional": [...],
@@ -292,7 +289,7 @@ export const TEMPLATES = {
   }
 }`,
 
-  MEDICINA_INTERNA: `{
+	MEDICINA_INTERNA: `{
   "diagnosis": {
     "main": "...",
     "additional": [...],
@@ -368,7 +365,7 @@ export const TEMPLATES = {
   }
 }`,
 
-  PNEUMOLOGIE: `{
+	PNEUMOLOGIE: `{
   "diagnosis": {
     "main": "...",
     "additional": [...],
@@ -443,9 +440,7 @@ export const TEMPLATES = {
 }`,
 };
 
-export function getTemplateBySpecialization(
-  specialization: string
-): string | undefined {
-  const normalized = specialization.toUpperCase().replace(/\s+/g, '_');
-  return TEMPLATES[normalized as keyof typeof TEMPLATES];
+export function getTemplateBySpecialization(specialization: string): string | undefined {
+	const normalized = specialization.toUpperCase().replace(/\s+/g, "_");
+	return TEMPLATES[normalized as keyof typeof TEMPLATES];
 }
