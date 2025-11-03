@@ -1,6 +1,8 @@
 "use client";
 
 import {
+	ChevronLeft,
+	ChevronRight,
 	FileAudio,
 	Pause,
 	Play,
@@ -29,6 +31,7 @@ interface RecordingPlayerProps {
 
 const STORAGE_KEY = "vtt_current_recording";
 const STORAGE_VOLUME_KEY = "vtt_player_volume";
+const STORAGE_MUTED_KEY = "vtt_player_muted";
 
 export function RecordingPlayer({ className }: RecordingPlayerProps) {
 	const audioRef = React.useRef<HTMLAudioElement>(null);
@@ -36,9 +39,33 @@ export function RecordingPlayer({ className }: RecordingPlayerProps) {
 	const [isPlaying, setIsPlaying] = React.useState(false);
 	const [currentTime, setCurrentTime] = React.useState(0);
 	const [duration, setDuration] = React.useState(0);
-	const [volume, setVolume] = React.useState(0.7);
-	const [isMuted, setIsMuted] = React.useState(false);
-	const [previousVolume, setPreviousVolume] = React.useState(0.7);
+	// Initialize volume from localStorage or default to 0.7
+	const [volume, setVolume] = React.useState(() => {
+		if (typeof window !== "undefined") {
+			const stored = localStorage.getItem(STORAGE_VOLUME_KEY);
+			if (stored) {
+				return Number.parseFloat(stored);
+			}
+		}
+		return 0.7;
+	});
+	// Initialize mute state from localStorage
+	const [isMuted, setIsMuted] = React.useState(() => {
+		if (typeof window !== "undefined") {
+			const stored = localStorage.getItem(STORAGE_MUTED_KEY);
+			return stored === "true";
+		}
+		return false;
+	});
+	const [previousVolume, setPreviousVolume] = React.useState(() => {
+		if (typeof window !== "undefined") {
+			const stored = localStorage.getItem(STORAGE_VOLUME_KEY);
+			if (stored) {
+				return Number.parseFloat(stored);
+			}
+		}
+		return 0.7;
+	});
 	const [sidebarWidth, setSidebarWidth] = React.useState("16rem");
 
 	// Listen to sidebar width changes
@@ -62,7 +89,6 @@ export function RecordingPlayer({ className }: RecordingPlayerProps) {
 	// Load recording from localStorage on mount
 	React.useEffect(() => {
 		const stored = localStorage.getItem(STORAGE_KEY);
-		const storedVolume = localStorage.getItem(STORAGE_VOLUME_KEY);
 
 		if (stored) {
 			try {
@@ -73,12 +99,6 @@ export function RecordingPlayer({ className }: RecordingPlayerProps) {
 			} catch (error) {
 				console.error("Failed to load recording from storage:", error);
 			}
-		}
-
-		if (storedVolume) {
-			const vol = Number.parseFloat(storedVolume);
-			setVolume(vol);
-			setPreviousVolume(vol);
 		}
 	}, []);
 
@@ -94,19 +114,34 @@ export function RecordingPlayer({ className }: RecordingPlayerProps) {
 		localStorage.setItem(STORAGE_VOLUME_KEY, volume.toString());
 	}, [volume]);
 
+	// Save mute state to localStorage when it changes
+	React.useEffect(() => {
+		localStorage.setItem(STORAGE_MUTED_KEY, isMuted.toString());
+	}, [isMuted]);
+
 	// Set up audio element event listeners
 	React.useEffect(() => {
 		const audio = audioRef.current;
 		if (!audio) return;
+
+		// Set initial volume immediately
+		audio.volume = isMuted ? 0 : volume;
 
 		const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
 		const handleDurationChange = () => setDuration(audio.duration);
 		const handleEnded = () => setIsPlaying(false);
 		const handlePlay = () => setIsPlaying(true);
 		const handlePause = () => setIsPlaying(false);
+		const handleLoadedMetadata = () => {
+			setDuration(audio.duration);
+			setCurrentTime(0);
+			// Ensure volume is set when metadata loads
+			audio.volume = isMuted ? 0 : volume;
+		};
 
 		audio.addEventListener("timeupdate", handleTimeUpdate);
 		audio.addEventListener("durationchange", handleDurationChange);
+		audio.addEventListener("loadedmetadata", handleLoadedMetadata);
 		audio.addEventListener("ended", handleEnded);
 		audio.addEventListener("play", handlePlay);
 		audio.addEventListener("pause", handlePause);
@@ -114,11 +149,12 @@ export function RecordingPlayer({ className }: RecordingPlayerProps) {
 		return () => {
 			audio.removeEventListener("timeupdate", handleTimeUpdate);
 			audio.removeEventListener("durationchange", handleDurationChange);
+			audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
 			audio.removeEventListener("ended", handleEnded);
 			audio.removeEventListener("play", handlePlay);
 			audio.removeEventListener("pause", handlePause);
 		};
-	}, []);
+	}, [currentRecording, volume, isMuted]);
 
 	// Update audio volume
 	React.useEffect(() => {
@@ -146,6 +182,19 @@ export function RecordingPlayer({ className }: RecordingPlayerProps) {
 			delete (window as Window & { loadRecording?: (recording: Recording) => void }).loadRecording;
 		};
 	}, []);
+
+	// Expose togglePlayPause globally
+	React.useEffect(() => {
+		(window as any).togglePlayPause = togglePlayPause;
+		return () => {
+			delete (window as any).togglePlayPause;
+		};
+	}, [isPlaying, currentRecording]);
+
+	// Broadcast playing state changes
+	React.useEffect(() => {
+		window.dispatchEvent(new CustomEvent("playingStateChanged", { detail: { isPlaying } }));
+	}, [isPlaying]);
 
 	const togglePlayPause = () => {
 		if (!audioRef.current || !currentRecording) return;
@@ -188,15 +237,67 @@ export function RecordingPlayer({ className }: RecordingPlayerProps) {
 		}
 	};
 
-	const skipForward = () => {
+	const skip10Forward = () => {
 		if (!audioRef.current) return;
 		audioRef.current.currentTime = Math.min(audioRef.current.currentTime + 10, duration);
 	};
 
-	const skipBackward = () => {
+	const skip10Backward = () => {
 		if (!audioRef.current) return;
 		audioRef.current.currentTime = Math.max(audioRef.current.currentTime - 10, 0);
 	};
+
+	const nextRecording = () => {
+		const win = window as any;
+		if (win.nextRecording) {
+			win.nextRecording();
+		}
+	};
+
+	const previousRecording = () => {
+		const win = window as any;
+		if (win.previousRecording) {
+			win.previousRecording();
+		}
+	};
+
+	// Keyboard shortcuts
+	React.useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			const target = e.target as HTMLElement;
+
+			// Skip if user is interacting with form elements or editable content
+			if (
+				target instanceof HTMLInputElement ||
+				target instanceof HTMLTextAreaElement ||
+				target instanceof HTMLSelectElement ||
+				target instanceof HTMLButtonElement ||
+				target.isContentEditable ||
+				target.closest("button") || // Check if target is inside a button
+				target.closest("select") // Check if target is inside a select
+			) {
+				return;
+			}
+
+			switch (e.key) {
+				case "ArrowLeft":
+					e.preventDefault();
+					skip10Backward();
+					break;
+				case "ArrowRight":
+					e.preventDefault();
+					skip10Forward();
+					break;
+				case " ":
+					e.preventDefault();
+					togglePlayPause();
+					break;
+			}
+		};
+
+		window.addEventListener("keydown", handleKeyDown);
+		return () => window.removeEventListener("keydown", handleKeyDown);
+	}, [duration, isPlaying, currentRecording]);
 
 	const formatTime = (time: number) => {
 		if (Number.isNaN(time)) return "0:00";
@@ -270,6 +371,7 @@ export function RecordingPlayer({ className }: RecordingPlayerProps) {
 							className="h-8 w-8"
 							onClick={handleReset}
 							disabled={!currentRecording}
+							title="Reset"
 						>
 							<RotateCcw className="h-4 w-4" />
 						</Button>
@@ -277,8 +379,19 @@ export function RecordingPlayer({ className }: RecordingPlayerProps) {
 							variant="ghost"
 							size="icon"
 							className="h-8 w-8"
-							onClick={skipBackward}
+							onClick={skip10Backward}
 							disabled={!currentRecording}
+							title="Back 10s (←)"
+						>
+							<ChevronLeft className="h-4 w-4" />
+						</Button>
+						<Button
+							variant="ghost"
+							size="icon"
+							className="h-8 w-8"
+							onClick={previousRecording}
+							disabled={!currentRecording}
+							title="Previous recording"
 						>
 							<SkipBack className="h-4 w-4" />
 						</Button>
@@ -288,6 +401,7 @@ export function RecordingPlayer({ className }: RecordingPlayerProps) {
 							className="h-10 w-10"
 							onClick={togglePlayPause}
 							disabled={!currentRecording}
+							title="Play/Pause (Space)"
 						>
 							{isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
 						</Button>
@@ -295,8 +409,9 @@ export function RecordingPlayer({ className }: RecordingPlayerProps) {
 							variant="ghost"
 							size="icon"
 							className="h-8 w-8"
-							onClick={skipForward}
+							onClick={nextRecording}
 							disabled={!currentRecording}
+							title="Next recording"
 						>
 							<SkipForward className="h-4 w-4" />
 						</Button>
@@ -304,8 +419,19 @@ export function RecordingPlayer({ className }: RecordingPlayerProps) {
 							variant="ghost"
 							size="icon"
 							className="h-8 w-8"
+							onClick={skip10Forward}
+							disabled={!currentRecording}
+							title="Forward 10s (→)"
+						>
+							<ChevronRight className="h-4 w-4" />
+						</Button>
+						<Button
+							variant="ghost"
+							size="icon"
+							className="h-8 w-8"
 							onClick={toggleMute}
 							disabled={!currentRecording}
+							title="Mute"
 						>
 							{isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
 						</Button>
@@ -345,6 +471,7 @@ export function RecordingPlayer({ className }: RecordingPlayerProps) {
 								className="h-8 w-8"
 								onClick={handleReset}
 								disabled={!currentRecording}
+								title="Reset"
 							>
 								<RotateCcw className="h-4 w-4" />
 							</Button>
@@ -352,8 +479,19 @@ export function RecordingPlayer({ className }: RecordingPlayerProps) {
 								variant="ghost"
 								size="icon"
 								className="h-8 w-8"
-								onClick={skipBackward}
+								onClick={skip10Backward}
 								disabled={!currentRecording}
+								title="Back 10s (←)"
+							>
+								<ChevronLeft className="h-4 w-4" />
+							</Button>
+							<Button
+								variant="ghost"
+								size="icon"
+								className="h-8 w-8"
+								onClick={previousRecording}
+								disabled={!currentRecording}
+								title="Previous recording"
 							>
 								<SkipBack className="h-4 w-4" />
 							</Button>
@@ -363,6 +501,7 @@ export function RecordingPlayer({ className }: RecordingPlayerProps) {
 								className="h-10 w-10"
 								onClick={togglePlayPause}
 								disabled={!currentRecording}
+								title="Play/Pause (Space)"
 							>
 								{isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
 							</Button>
@@ -370,10 +509,21 @@ export function RecordingPlayer({ className }: RecordingPlayerProps) {
 								variant="ghost"
 								size="icon"
 								className="h-8 w-8"
-								onClick={skipForward}
+								onClick={nextRecording}
 								disabled={!currentRecording}
+								title="Next recording"
 							>
 								<SkipForward className="h-4 w-4" />
+							</Button>
+							<Button
+								variant="ghost"
+								size="icon"
+								className="h-8 w-8"
+								onClick={skip10Forward}
+								disabled={!currentRecording}
+								title="Forward 10s (→)"
+							>
+								<ChevronRight className="h-4 w-4" />
 							</Button>
 						</div>
 
@@ -427,7 +577,9 @@ export function RecordingPlayer({ className }: RecordingPlayerProps) {
 // Helper function to load a recording from anywhere in the app
 export function loadRecording(recording: Recording) {
 	if (typeof window !== "undefined") {
-		const win = window as Window & { loadRecording?: (recording: Recording) => void };
+		const win = window as Window & {
+			loadRecording?: (recording: Recording) => void;
+		};
 		if (win.loadRecording) {
 			win.loadRecording(recording);
 		}
