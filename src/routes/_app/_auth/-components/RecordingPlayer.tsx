@@ -284,10 +284,17 @@ export function RecordingPlayer({ className }: RecordingPlayerProps) {
   // Keyboard shortcuts
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Skip if user is typing in an input
+      const target = e.target as HTMLElement;
+      
+      // Skip if user is interacting with form elements or editable content
       if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        target instanceof HTMLButtonElement ||
+        target.isContentEditable ||
+        target.closest('button') || // Check if target is inside a button
+        target.closest('select')    // Check if target is inside a select
       ) {
         return;
       }
