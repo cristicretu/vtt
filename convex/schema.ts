@@ -79,8 +79,9 @@ const schema = defineSchema({
 		.index("userId", ["userId"])
 		.index("stripeId", ["stripeId"]),
 
-	// Patients table. A patient is not tied to a single doctor.
+	// Patients table. A patient is tied to the doctor who created them.
 	patients: defineTable({
+		doctorId: v.id("users"), // Links to the doctor who created this patient
 		name: v.string(),
 		surname: v.string(),
 		dateOfBirth: v.number(), // Unix timestamp for date of birth
@@ -88,6 +89,7 @@ const schema = defineSchema({
 		phone: v.optional(v.string()),
 		cnp: v.string(), // Romanian Personal Numerical Code
 	})
+		.index("doctorId", ["doctorId"])
 		.index("cnp", ["cnp"])
 		.index("email", ["email"])
 		.index("phone", ["phone"]),

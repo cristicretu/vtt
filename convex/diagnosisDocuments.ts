@@ -22,6 +22,15 @@ export const createDiagnosisDocument = mutation({
       throw new Error("You must be logged in.");
     }
 
+    // Verify the patient belongs to this doctor
+    const patient = await ctx.db.get(args.patientId);
+    if (!patient) {
+      throw new Error("Patient not found.");
+    }
+    if (patient.doctorId !== userId) {
+      throw new Error("You don't have permission to create documents for this patient.");
+    }
+
     const documentId = await ctx.db.insert("diagnosisDocuments", {
       patientId: args.patientId,
       doctorId: userId,
@@ -45,6 +54,20 @@ export const createDiagnosisDocument = mutation({
 export const getDiagnosisDocumentsForPatient = query({
   args: { patientId: v.id("patients") },
   handler: async (ctx, args) => {
+    const userId = await auth.getUserId(ctx);
+    if (!userId) {
+      throw new Error("You must be logged in.");
+    }
+
+    // Verify the patient belongs to this doctor
+    const patient = await ctx.db.get(args.patientId);
+    if (!patient) {
+      throw new Error("Patient not found.");
+    }
+    if (patient.doctorId !== userId) {
+      throw new Error("You don't have permission to view documents for this patient.");
+    }
+
     const documents = await ctx.db
       .query("diagnosisDocuments")
       .withIndex("patientId", (q) => q.eq("patientId", args.patientId))
@@ -85,6 +108,11 @@ export const deleteDiagnosisDocument = mutation({
     const document = await ctx.db.get(args.documentId);
     if (!document) {
       throw new Error("Document not found");
+    }
+
+    // Verify the document belongs to this doctor
+    if (document.doctorId !== userId) {
+      throw new Error("You don't have permission to delete this document.");
     }
 
     // Delete the storage file if it exists
