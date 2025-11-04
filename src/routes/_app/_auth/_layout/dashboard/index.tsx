@@ -1,14 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { format } from "date-fns";
-import { CalendarIcon, Mail, Phone, User } from "lucide-react";
+import { useMutation } from "convex/react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import { api } from "~/convex/_generated/api";
 import siteConfig from "~/site.config";
 
 export const Route = createFileRoute("/_app/_auth/_layout/dashboard/")({
@@ -21,25 +20,79 @@ export const Route = createFileRoute("/_app/_auth/_layout/dashboard/")({
 });
 
 export default function Dashboard() {
+	const createPatient = useMutation(api.patients.createPatient);
+	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [formData, setFormData] = useState({
-		fullName: "",
+		name: "",
+		surname: "",
+		dateOfBirth: "",
 		email: "",
 		phone: "",
+		cnp: "",
 	});
 	const [dateOfBirth, setDateOfBirth] = useState<Date>();
 
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		console.log("Form submitted:", {
-			...formData,
-			dateOfBirth: dateOfBirth?.toISOString(),
-		});
+		setIsSubmitting(true);
+
+		try {
+			// Convert date string to Unix timestamp
+			const dateOfBirth = new Date(formData.dateOfBirth).getTime();
+
+			await createPatient({
+				name: formData.name,
+				surname: formData.surname,
+				dateOfBirth,
+				email: formData.email || undefined,
+				phone: formData.phone ? `+407${formData.phone}` : undefined,
+				cnp: formData.cnp,
+			});
+
+			toast.success("Patient created successfully!");
+
+			// Clear form
+			setFormData({
+				name: "",
+				surname: "",
+				dateOfBirth: "",
+				email: "",
+				phone: "",
+				cnp: "",
+			});
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : "Failed to create patient");
+		} finally {
+			setIsSubmitting(false);
+		}
 	};
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const { name, value } = e.target;
+
+		// For CNP field, only allow digits
+		if (name === "cnp") {
+			const digitsOnly = value.replace(/\D/g, "");
+			setFormData({
+				...formData,
+				[name]: digitsOnly,
+			});
+			return;
+		}
+
+		// For phone field, only allow digits (max 8)
+		if (name === "phone") {
+			const digitsOnly = value.replace(/\D/g, "").slice(0, 8);
+			setFormData({
+				...formData,
+				[name]: digitsOnly,
+			});
+			return;
+		}
+
 		setFormData({
 			...formData,
-			[e.target.name]: e.target.value,
+			[name]: value,
 		});
 	};
 
@@ -70,111 +123,115 @@ export default function Dashboard() {
 								</div>
 							</div>
 						</CardHeader>
-						<CardContent className="pb-6 md:pb-8">
-							<form onSubmit={handleSubmit} className="space-y-6 md:space-y-8">
-								<div className="grid gap-6 md:grid-cols-2 md:gap-8">
-									<div className="space-y-2 md:space-y-3">
-										<Label htmlFor="fullName" className="font-semibold text-sm md:text-base">
-											Full Name
-										</Label>
-										<div className="relative">
-											<User className="absolute top-3 left-3 h-4 w-4 text-muted-foreground md:top-3.5 md:h-5 md:w-5" />
-											<Input
-												id="fullName"
-												name="fullName"
-												placeholder="John Smith"
-												value={formData.fullName}
-												onChange={handleChange}
-												required
-												className="h-11 pl-10 text-sm md:h-12 md:pl-11 md:text-base"
-											/>
-										</div>
+						<CardContent>
+							<form onSubmit={handleSubmit} className="space-y-6">
+								<div className="grid gap-4 md:grid-cols-2">
+									<div className="space-y-2">
+										<Label htmlFor="name">First Name</Label>
+										<Input
+											id="name"
+											name="name"
+											placeholder="John"
+											value={formData.name}
+											onChange={handleChange}
+											required
+										/>
 									</div>
 
-									<div className="space-y-2 md:space-y-3">
-										<Label className="font-semibold text-sm md:text-base">Date of Birth</Label>
-										<Popover>
-											<PopoverTrigger asChild>
-												<Button
-													variant="outline"
-													className={cn(
-														"h-11 w-full justify-start text-left font-normal text-sm md:h-12 md:text-base",
-														!dateOfBirth && "text-muted-foreground",
-													)}
-												>
-													<CalendarIcon className="mr-2 h-4 w-4 shrink-0 md:mr-3 md:h-5 md:w-5" />
-													<span className="truncate">
-														{dateOfBirth ? format(dateOfBirth, "PPP") : "Pick a date"}
-													</span>
-												</Button>
-											</PopoverTrigger>
-											<PopoverContent className="w-auto p-0" align="start">
-												<Calendar
-													mode="single"
-													selected={dateOfBirth}
-													onSelect={setDateOfBirth}
-													initialFocus
-													captionLayout="dropdown-buttons"
-													fromYear={1900}
-													toYear={new Date().getFullYear()}
-												/>
-											</PopoverContent>
-										</Popover>
-									</div>
-
-									<div className="space-y-2 md:space-y-3">
-										<Label htmlFor="email" className="font-semibold text-sm md:text-base">
-											Email Address
-										</Label>
-										<div className="relative">
-											<Mail className="absolute top-3 left-3 h-4 w-4 text-muted-foreground md:top-3.5 md:h-5 md:w-5" />
-											<Input
-												id="email"
-												name="email"
-												type="email"
-												placeholder="john.smith@example.com"
-												value={formData.email}
-												onChange={handleChange}
-												required
-												className="h-11 pl-10 text-sm md:h-12 md:pl-11 md:text-base"
-											/>
-										</div>
-									</div>
-
-									<div className="space-y-2 md:space-y-3">
-										<Label htmlFor="phone" className="font-semibold text-sm md:text-base">
-											Phone Number
-										</Label>
-										<div className="relative">
-											<Phone className="absolute top-3 left-3 h-4 w-4 text-muted-foreground md:top-3.5 md:h-5 md:w-5" />
-											<Input
-												id="phone"
-												name="phone"
-												type="tel"
-												placeholder="+1 (555) 123-4567"
-												value={formData.phone}
-												onChange={handleChange}
-												required
-												className="h-11 pl-10 text-sm md:h-12 md:pl-11 md:text-base"
-											/>
-										</div>
+									<div className="space-y-2">
+										<Label htmlFor="surname">Surname</Label>
+										<Input
+											id="surname"
+											name="surname"
+											placeholder="Smith"
+											value={formData.surname}
+											onChange={handleChange}
+											required
+										/>
 									</div>
 								</div>
 
-								<div className="flex flex-col gap-3 pt-2 md:flex-row md:gap-4 md:pt-4">
-									<Button
-										type="submit"
-										size="lg"
-										className="h-11 w-full text-sm md:h-12 md:flex-1 md:text-base"
-									>
-										Add Patient
+								<div className="space-y-2">
+									<Label htmlFor="cnp">
+										CNP (Personal Numerical Code)
+										<span className="ml-1 text-muted-foreground font-normal">
+											- {formData.cnp.length} digits
+										</span>
+									</Label>
+									<Input
+										id="cnp"
+										name="cnp"
+										placeholder="1234567890123"
+										value={formData.cnp}
+										onChange={handleChange}
+										maxLength={13}
+										pattern="\d{13}"
+										required
+										title="CNP must be exactly 13 digits"
+									/>
+								</div>
+
+								<div className="space-y-2">
+									<Label htmlFor="dateOfBirth">Date of Birth</Label>
+									<Input
+										id="dateOfBirth"
+										name="dateOfBirth"
+										type="date"
+										value={formData.dateOfBirth}
+										onChange={handleChange}
+										required
+									/>
+								</div>
+
+								<div className="space-y-2">
+									<Label htmlFor="email">Email (Optional)</Label>
+									<Input
+										id="email"
+										name="email"
+										type="email"
+										placeholder="john@example.com"
+										value={formData.email}
+										onChange={handleChange}
+									/>
+								</div>
+
+								<div className="space-y-2">
+									<Label htmlFor="phone">Phone Number (Optional)</Label>
+									<div className="relative">
+										<div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+											+407
+										</div>
+										<Input
+											id="phone"
+											name="phone"
+											type="tel"
+											placeholder="12345678"
+											value={formData.phone}
+											onChange={handleChange}
+											className="pl-14"
+											maxLength={8}
+										/>
+									</div>
+								</div>
+
+								<div className="flex gap-3">
+									<Button type="submit" className="flex-1" disabled={isSubmitting}>
+										{isSubmitting ? "Adding..." : "Add Patient"}
 									</Button>
 									<Button
 										type="button"
 										variant="outline"
-										size="lg"
-										onClick={handleClear}
-										className="h-11 w-full text-sm md:h-12 md:w-auto md:text-base"
+										onClick={() =>
+											setFormData({
+												name: "",
+												surname: "",
+												dateOfBirth: "",
+												email: "",
+												phone: "",
+												cnp: "",
+											})
+										}
+										disabled={isSubmitting}
 									>
 										Clear Form
 									</Button>

@@ -45,7 +45,6 @@ import {
 } from "@/components/ui/table";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { Entry } from "~/types";
-import { patientsData } from "~/types";
 import { loadRecording } from "./RecordingPlayer";
 
 // Define columns for the Entry table
@@ -145,7 +144,6 @@ const columns: ColumnDef<Entry>[] = [
 		header: "Play",
 		cell: ({ row }) => {
 			const entry = row.original;
-			const patient = patientsData.find((p) => p.id === entry.patientId);
 
 			return (
 				<Button
@@ -156,7 +154,7 @@ const columns: ColumnDef<Entry>[] = [
 						loadRecording({
 							id: entry.id,
 							patientId: entry.patientId,
-							patientName: patient?.fullName || "Unknown Patient",
+							patientName: "Unknown Patient", // TODO: Get patient name from Convex
 							recording: entry.recording,
 							createdAt: entry.createdAt,
 						});
@@ -623,15 +621,12 @@ export function PatientEntries({ entries }: PatientEntriesProps) {
 										size="icon"
 										variant="outline"
 										onClick={() => {
-											const patient = patientsData.find(
-												(p) => p.id === currentSelectedEntry.patientId,
-											);
 											loadRecording({
-												id: currentSelectedEntry.id,
-												patientId: currentSelectedEntry.patientId,
-												patientName: patient?.fullName || "Unknown Patient",
-												recording: currentSelectedEntry.recording,
-												createdAt: currentSelectedEntry.createdAt,
+												id: selectedEntry.id,
+												patientId: selectedEntry.patientId,
+												patientName: "Unknown Patient", // TODO: Get patient name from Convex
+												recording: selectedEntry.recording,
+												createdAt: selectedEntry.createdAt,
 											});
 										}}
 									>

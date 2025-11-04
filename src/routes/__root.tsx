@@ -2,6 +2,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, Outlet, useRouter } from "@tanstack/react-router";
 import React, { Suspense } from "react";
 import { Helmet } from "react-helmet-async";
+import { Toaster } from "sonner";
 
 const TanStackRouterDevtools =
 	process.env.NODE_ENV === "production"
@@ -26,6 +27,7 @@ export const Route = createRootRouteWithContext<{
 		return (
 			<>
 				<Outlet />
+				<Toaster richColors position="top-right" />
 				<Helmet>
 					<title>{title}</title>
 				</Helmet>
