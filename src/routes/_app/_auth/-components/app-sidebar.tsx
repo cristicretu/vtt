@@ -1,4 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { useQuery } from "convex/react";
 import {
 	AudioLinesIcon,
 	ChevronsLeft,
@@ -7,6 +8,7 @@ import {
 	Home,
 	Plus,
 	Search,
+	Volume2,
 	X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";

@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
+import { User } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -98,9 +99,12 @@ export default function Dashboard() {
 
 	const handleClear = () => {
 		setFormData({
-			fullName: "",
+			name: "",
+			surname: "",
+			dateOfBirth: "",
 			email: "",
 			phone: "",
+			cnp: "",
 		});
 		setDateOfBirth(undefined);
 	};
