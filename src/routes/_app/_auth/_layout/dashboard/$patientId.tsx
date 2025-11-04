@@ -330,71 +330,69 @@ function PatientPage() {
 										return (
 											<Card
 												key={doc._id}
-												className={`overflow-hidden transition-all ${
-													isCurrentRecording ? "ring-2 ring-primary shadow-lg" : ""
-												}`}
+												className={`overflow-hidden transition-all ${isCurrentRecording ? "ring-2 ring-primary shadow-lg" : ""
+													}`}
 											>
 												<CardContent className="p-3">
-													<div className="flex items-center gap-3 justify-between">
-														{/* Left side: Play button and Date */}
-														<div className="flex items-center gap-3 min-w-0">
-															{/* Play/Pause Button */}
-															{doc.fileUrl && (
-																<Button
-																	variant="ghost"
-																	size="icon"
-																	className="h-8 w-8 shrink-0"
-																	onClick={() => {
-																		if (isActiveAndPlaying) {
-																			// If this recording is currently playing, pause it
-																			const win = window as any;
-																			if (win.togglePlayPause) {
-																				win.togglePlayPause();
+													<div className="flex sm:flex-row flex-col items-center gap-3 justify-between">
+														<div className="flex gap-2 flex-col sm:flex-row items-center justify-start">
+															{/* Left side: Play button and Date */}
+															<div className="flex items-center gap-3">
+																{/* Play/Pause Button */}
+																{doc.fileUrl && (
+																	<Button
+																		variant="ghost"
+																		size="icon"
+																		className="h-8 w-8 shrink-0"
+																		onClick={() => {
+																			if (isActiveAndPlaying) {
+																				// If this recording is currently playing, pause it
+																				const win = window as any;
+																				if (win.togglePlayPause) {
+																					win.togglePlayPause();
+																				}
+																			} else if (isCurrentRecording && !isPlaying) {
+																				// If this recording is loaded but paused, resume it
+																				const win = window as any;
+																				if (win.togglePlayPause) {
+																					win.togglePlayPause();
+																				}
+																			} else {
+																				// Load and play this recording
+																				loadRecording({
+																					id: doc._id,
+																					patientId: doc.patientId,
+																					patientName: fullName,
+																					recording: doc.fileUrl || "",
+																					createdAt: new Date(doc.dateCreated),
+																				});
+																				setCurrentlyPlayingId(doc._id);
+																				window.dispatchEvent(new Event("recordingChanged"));
 																			}
-																		} else if (isCurrentRecording && !isPlaying) {
-																			// If this recording is loaded but paused, resume it
-																			const win = window as any;
-																			if (win.togglePlayPause) {
-																				win.togglePlayPause();
-																			}
-																		} else {
-																			// Load and play this recording
-																			loadRecording({
-																				id: doc._id,
-																				patientId: doc.patientId,
-																				patientName: fullName,
-																				recording: doc.fileUrl || "",
-																				createdAt: new Date(doc.dateCreated),
-																			});
-																			setCurrentlyPlayingId(doc._id);
-																			window.dispatchEvent(new Event("recordingChanged"));
-																		}
-																	}}
-																>
-																	{isActiveAndPlaying ? (
-																		<Pause className="h-4 w-4 fill-current" />
-																	) : (
-																		<Play className="h-4 w-4" />
-																	)}
-																</Button>
-															)}
+																		}}
+																	>
+																		{isActiveAndPlaying ? (
+																			<Pause className="h-4 w-4 fill-current" />
+																		) : (
+																			<Play className="h-4 w-4" />
+																		)}
+																	</Button>
+																)}
 
-															{/* Date & Time */}
-															<span className="text-sm font-medium truncate">
-																{new Date(doc.dateCreated).toLocaleDateString("en-US", {
-																	month: "short",
-																	day: "numeric",
-																	year: "numeric",
-																	hour: "2-digit",
-																	minute: "2-digit",
-																})}
-															</span>
-														</div>
+																{/* Date & Time */}
+																<span className="text-sm font-medium truncate">
+																	{new Date(doc.dateCreated).toLocaleDateString("en-US", {
+																		month: "short",
+																		day: "numeric",
+																		year: "numeric",
+																		hour: "2-digit",
+																		minute: "2-digit",
+																	})}
+																</span>
+															</div>
 
-														{/* Right side: Status badges, Duration, File size, and Delete button */}
-														<div className="flex items-center gap-3 flex-wrap justify-end">
 															{/* Status Badges */}
-															<div className="flex items-center gap-1.5 flex-wrap">
+															<div className="flex items-center gap-1.5">
 																<div className="flex items-center gap-1">
 																	<span className="text-xs text-muted-foreground">Transcript:</span>
 																	<Badge
@@ -420,7 +418,10 @@ function PatientPage() {
 																	</Badge>
 																</div>
 															</div>
+														</div>
 
+														{/* Right side: Status badges, Duration, File size, and Delete button */}
+														<div className="flex items-center gap-2 px-2 sm:flex-col flex-row justify-end">
 															{/* Duration */}
 															{doc.audioMetadata?.duration && (
 																<span className="text-xs text-muted-foreground whitespace-nowrap">
