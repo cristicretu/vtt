@@ -1,20 +1,56 @@
 import { action, internalMutation, internalQuery, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
+import { OPENAI_API_KEY } from "./env";
 
 /**
- * TODO: Replace this with actual API call
+ * Transcribes audio using OpenAI Whisper API
  */
-async function mockTranscriptionAPI(audioUrl: string): Promise<string> {
-	await new Promise((resolve) => setTimeout(resolve, 2000));
+async function transcribeAudioWithWhisper(audioUrl: string): Promise<string> {
+	if (!OPENAI_API_KEY) {
+		throw new Error("OPENAI_API_KEY environment variable is not set");
+	}
 
-	const mockTranscripts = [
-		"Pacientul se prezintă cu durere acută în regiunea lombară. Simptomele au început acum aproximativ 3 zile. Nu are antecedente de traume. Durerea este descrisă ca fiind ascuțită și radiază pe piciorul stâng. Pacientul raportează dificultăți de somn și mobilitate limitată. I s-au prescris medicamente antiinflamatoare și s-a recomandat fizioterapie.",
-		"Consultație ulterioară pentru gestionarea hipertensiunii arteriale. Tensiunea arterială arată o îmbunătățire de la 150/95 la 135/85 mmHg. Pacientul raportează o bună respectare a schemei medicamentoase. Nu s-au observat efecte adverse. Modificările dietei arată rezultate pozitive. Continuați planul de tratament actual și programați următorul control peste 4 săptămâni",
-		"Consultație inițială pentru dureri de cap persistente care apar de 3-4 ori pe săptămână în ultima lună. Pacientul descrie dureri pulsatile în principal în regiunea frontală. Factorii declanșatori includ stresul și lipsa somnului. Nu există tulburări de vedere sau simptome neurologice. Se recomandă modificări ale stilului de viață, tehnici de gestionare a stresului și prescrierea medicației profilactice.",
-	];
+	// Download the audio file from Convex storage
+	const audioResponse = await fetch(audioUrl);
 
-	return mockTranscripts[Math.floor(Math.random() * mockTranscripts.length)];
+	if (!audioResponse.ok) {
+		throw new Error(`Failed to download audio file: ${audioResponse.statusText}`);
+	}
+
+	const audioBlob = await audioResponse.blob();
+
+	// Prepare the form data for OpenAI API
+	const formData = new FormData();
+	formData.append("file", audioBlob, "audio.webm");
+	formData.append("model", "whisper-1");
+	formData.append("language", "ro"); // Romanian language for better accuracy
+
+	// Call OpenAI Whisper API
+	const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+		method: "POST",
+		headers: {
+			Authorization: `Bearer ${OPENAI_API_KEY}`,
+		},
+		body: formData,
+	});
+
+	if (!response.ok) {
+		const errorData = await response.json().catch(() => ({}));
+		throw new Error(
+			`OpenAI API error: ${response.status} ${response.statusText}. ${
+				errorData.error?.message || ""
+			}`
+		);
+	}
+
+	const result = await response.json();
+
+	if (!result.text) {
+		throw new Error("No transcription text received from OpenAI API");
+	}
+
+	return result.text;
 }
 
 export const generateTranscript = action({
@@ -46,8 +82,8 @@ export const generateTranscript = action({
 				throw new Error("Audio file not found in storage");
 			}
 
-			// TODO: Replace mockTranscriptionAPI with actual API call
-			const transcript = await mockTranscriptionAPI(audioUrl);
+			// Transcribe audio using OpenAI Whisper API
+			const transcript = await transcribeAudioWithWhisper(audioUrl);
 
 			await ctx.runMutation(internal.transcript.updateTranscript, {
 				documentId: args.documentId,

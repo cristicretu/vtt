@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
-import { Calendar, Mail, Pause, Pencil, Phone, Play, Trash2, User } from "lucide-react";
+import { Calendar, Download, Mail, Pause, Pencil, Phone, Play, Trash2, User } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { EditPatientDialog } from "@/routes/_app/_auth/-components/EditPatientDialog";
 import { RecordingUpload } from "@/routes/_app/_auth/-components/RecordingUpload";
 import { loadRecording } from "@/routes/_app/_auth/-components/RecordingPlayer";
+import { generateMedicalDocx } from "@/lib/docx-generator";
 import { api } from "~/convex/_generated/api";
 import type { Id } from "~/convex/_generated/dataModel";
 
@@ -188,6 +189,30 @@ function PatientPage() {
 			toast.error(error instanceof Error ? error.message : "Failed to delete medical entry");
 		} finally {
 			setIsDeletingDocument(false);
+		}
+	};
+
+	const handleDownloadDocx = async (doc: any) => {
+		try {
+			if (!doc.structuredOutput) {
+				toast.error("No structured medical data available for this document");
+				return;
+			}
+
+			toast.loading("Generating DOCX file...");
+
+			// Format the date for the filename
+			const date = new Date(doc.dateCreated).toLocaleDateString("ro-RO");
+
+			// Generate and download the DOCX file
+			await generateMedicalDocx(doc.structuredOutput, fullName, date);
+
+			toast.dismiss();
+			toast.success("DOCX file downloaded successfully");
+		} catch (error) {
+			toast.dismiss();
+			toast.error(error instanceof Error ? error.message : "Failed to generate DOCX file");
+			console.error("Error generating DOCX:", error);
 		}
 	};
 
@@ -391,7 +416,7 @@ function PatientPage() {
 															</span>
 														</div>
 
-														{/* Right side: Status badges, Duration, File size, and Delete button */}
+														{/* Right side: Status badges, Duration, File size, Download and Delete buttons */}
 														<div className="flex items-center gap-3 flex-wrap justify-end">
 															{/* Status Badges */}
 															<div className="flex items-center gap-1.5 flex-wrap">
@@ -436,6 +461,19 @@ function PatientPage() {
 																<span className="text-xs text-muted-foreground whitespace-nowrap">
 																	{(doc.audioMetadata.fileSize / 1024 / 1024).toFixed(1)} MB
 																</span>
+															)}
+
+															{/* Download DOCX Button - Only show when structuredOutputStatus is completed */}
+															{doc.structuredOutputStatus === "completed" && (
+																<Button
+																	variant="ghost"
+																	size="icon"
+																	className="h-8 w-8 shrink-0 text-primary hover:text-primary"
+																	onClick={() => handleDownloadDocx(doc)}
+																	title="Download DOCX"
+																>
+																	<Download className="h-4 w-4" />
+																</Button>
 															)}
 
 															{/* Delete Button */}
