@@ -40,7 +40,7 @@ async function transcribeAudioWithWhisper(audioUrl: string): Promise<string> {
 		throw new Error(
 			`OpenAI API error: ${response.status} ${response.statusText}. ${
 				errorData.error?.message || ""
-			}`
+			}`,
 		);
 	}
 

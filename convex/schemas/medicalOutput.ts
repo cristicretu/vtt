@@ -65,16 +65,16 @@ export const medicalOutputSchema = z.object({
 				.optional()
 				.describe("Analize de laborator"),
 
-		imaging: z
-			.array(
-				z.object({
-					type: z.string().describe("Tipul investigației (ex: ecografie, radiografie)"),
-					findings: z.union([z.string(), z.array(z.string())]).describe("Rezultatele"),
-					date: z.string().optional(),
-				}),
-			)
-			.optional()
-			.describe("Investigații imagistice"),
+			imaging: z
+				.array(
+					z.object({
+						type: z.string().describe("Tipul investigației (ex: ecografie, radiografie)"),
+						findings: z.union([z.string(), z.array(z.string())]).describe("Rezultatele"),
+						date: z.string().optional(),
+					}),
+				)
+				.optional()
+				.describe("Investigații imagistice"),
 
 			other: z
 				.array(
@@ -227,15 +227,15 @@ export const medicalOutputValidator = v.object({
 					}),
 				),
 			),
-		imaging: v.optional(
-			v.array(
-				v.object({
-					type: v.string(),
-					findings: v.union(v.string(), v.array(v.string())),
-					date: v.optional(v.string()),
-				}),
+			imaging: v.optional(
+				v.array(
+					v.object({
+						type: v.string(),
+						findings: v.union(v.string(), v.array(v.string())),
+						date: v.optional(v.string()),
+					}),
+				),
 			),
-		),
 			other: v.optional(
 				v.array(
 					v.object({

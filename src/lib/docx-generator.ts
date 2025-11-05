@@ -1,11 +1,4 @@
-import {
-	Document,
-	Paragraph,
-	TextRun,
-	HeadingLevel,
-	AlignmentType,
-	Packer,
-} from "docx";
+import { Document, Paragraph, TextRun, HeadingLevel, AlignmentType, Packer } from "docx";
 import { saveAs } from "file-saver";
 import type { MedicalOutput } from "~/convex/schemas/medicalOutput";
 
@@ -106,7 +99,11 @@ export async function generateMedicalDocx(
 
 		if (data.patientInfo.gender) {
 			const genderDisplay =
-				data.patientInfo.gender === "M" ? "Masculin" : data.patientInfo.gender === "F" ? "Feminin" : "Necunoscut";
+				data.patientInfo.gender === "M"
+					? "Masculin"
+					: data.patientInfo.gender === "F"
+						? "Feminin"
+						: "Necunoscut";
 			sections.push(
 				new Paragraph({
 					children: [
@@ -222,19 +219,29 @@ export async function generateMedicalDocx(
 			sections.push(createParagraph("Semne vitale:", true));
 
 			if (data.examination.vitalSigns.bloodPressure) {
-				sections.push(createBullet(`Tensiune arterială: ${data.examination.vitalSigns.bloodPressure}`));
+				sections.push(
+					createBullet(`Tensiune arterială: ${data.examination.vitalSigns.bloodPressure}`),
+				);
 			}
 			if (data.examination.vitalSigns.heartRate) {
-				sections.push(createBullet(`Frecvență cardiacă: ${data.examination.vitalSigns.heartRate} bpm`));
+				sections.push(
+					createBullet(`Frecvență cardiacă: ${data.examination.vitalSigns.heartRate} bpm`),
+				);
 			}
 			if (data.examination.vitalSigns.temperature) {
 				sections.push(createBullet(`Temperatură: ${data.examination.vitalSigns.temperature}°C`));
 			}
 			if (data.examination.vitalSigns.respiratoryRate) {
-				sections.push(createBullet(`Frecvență respiratorie: ${data.examination.vitalSigns.respiratoryRate}/min`));
+				sections.push(
+					createBullet(
+						`Frecvență respiratorie: ${data.examination.vitalSigns.respiratoryRate}/min`,
+					),
+				);
 			}
 			if (data.examination.vitalSigns.oxygenSaturation) {
-				sections.push(createBullet(`Saturație oxigen: ${data.examination.vitalSigns.oxygenSaturation}%`));
+				sections.push(
+					createBullet(`Saturație oxigen: ${data.examination.vitalSigns.oxygenSaturation}%`),
+				);
 			}
 		}
 
@@ -417,7 +424,10 @@ export async function generateMedicalDocx(
 			);
 		}
 
-		if (data.clinicalNotes.differentialDiagnosis && data.clinicalNotes.differentialDiagnosis.length > 0) {
+		if (
+			data.clinicalNotes.differentialDiagnosis &&
+			data.clinicalNotes.differentialDiagnosis.length > 0
+		) {
 			sections.push(createParagraph("Diagnostice diferențiale:", true));
 			for (const diff of data.clinicalNotes.differentialDiagnosis) {
 				sections.push(createBullet(diff));

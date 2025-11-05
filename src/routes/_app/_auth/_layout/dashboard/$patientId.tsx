@@ -1,6 +1,19 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useAction } from "convex/react";
-import { Calendar, Download, Mail, Pause, Pencil, Phone, Play, Trash2, User, FileText, Sparkles } from "lucide-react";
+import {
+	Calendar,
+	Download,
+	Mail,
+	Pause,
+	Pencil,
+	Phone,
+	Play,
+	Trash2,
+	User,
+	FileText,
+	Sparkles,
+	ChevronDown,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
@@ -16,6 +29,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { EditPatientDialog } from "@/routes/_app/_auth/-components/EditPatientDialog";
 import { RecordingUpload } from "@/routes/_app/_auth/-components/RecordingUpload";
 import { loadRecording } from "@/routes/_app/_auth/-components/RecordingPlayer";
@@ -38,6 +52,7 @@ function PatientPage() {
 	const [isDeletingDocument, setIsDeletingDocument] = useState(false);
 	const [currentlyPlayingId, setCurrentlyPlayingId] = useState<string | null>(null);
 	const [isPlaying, setIsPlaying] = useState(false);
+	const [expandedDocuments, setExpandedDocuments] = useState<Set<string>>(new Set());
 
 	// Fetch patient data from Convex
 	const patient = useQuery(api.patients.getPatient, {
@@ -210,9 +225,8 @@ function PatientPage() {
 	const handleStartAnalysis = async (documentId: string) => {
 		try {
 			toast.loading("Starting analysis...");
-			await generateStructuredOutput({ 
+			await generateStructuredOutput({
 				documentId: documentId as Id<"diagnosisDocuments">,
-				specialization: patient?.specialisation
 			});
 			toast.dismiss();
 			toast.success("Analysis started successfully");
@@ -383,15 +397,28 @@ function PatientPage() {
 									{diagnosisDocuments.map((doc) => {
 										const isCurrentRecording = currentlyPlayingId === doc._id;
 										const isActiveAndPlaying = isCurrentRecording && isPlaying;
+										const isExpanded = expandedDocuments.has(doc._id);
+										const toggleExpanded = () => {
+											setExpandedDocuments((prev) => {
+												const next = new Set(prev);
+												if (next.has(doc._id)) {
+													next.delete(doc._id);
+												} else {
+													next.add(doc._id);
+												}
+												return next;
+											});
+										};
+
 										return (
-											<Card
-												key={doc._id}
-												className={`overflow-hidden transition-all ${
-													isCurrentRecording ? "ring-2 ring-primary shadow-lg" : ""
-												}`}
-											>
-												<CardContent className="p-3">
-													<div className="flex items-center gap-3 justify-between">
+											<Collapsible key={doc._id} open={isExpanded} onOpenChange={toggleExpanded}>
+												<Card
+													className={`overflow-hidden transition-all ${
+														isCurrentRecording ? "ring-2 ring-primary shadow-lg" : ""
+													}`}
+												>
+													<CardContent className="p-3">
+														<div className="flex items-center gap-3 justify-between">
 														{/* Left side: Play button and Date */}
 														<div className="flex items-center gap-3 min-w-0">
 															{/* Play/Pause Button */}
@@ -495,7 +522,8 @@ function PatientPage() {
 															)}
 
 															{/* Transcribe Button - Show if transcript is pending or failed */}
-															{(doc.transcriptStatus === "pending" || doc.transcriptStatus === "failed") && (
+															{(doc.transcriptStatus === "pending" ||
+																doc.transcriptStatus === "failed") && (
 																<Button
 																	variant="outline"
 																	size="sm"
@@ -508,20 +536,23 @@ function PatientPage() {
 																</Button>
 															)}
 
-															{/* Analyze Button - Show if transcript is completed and analysis is pending or failed */}
-															{doc.transcriptStatus === "completed" && 
-															 (doc.structuredOutputStatus === "pending" || doc.structuredOutputStatus === "failed") && (
-																<Button
-																	variant="outline"
-																	size="sm"
-																	className="h-8 shrink-0 text-xs"
-																	onClick={() => handleStartAnalysis(doc._id)}
-																	title="Start analysis"
-																>
-																	<Sparkles className="h-3 w-3 mr-1" />
-																	Analyze
-																</Button>
-															)}
+														{/* Analyze Button - Show if transcript is completed */}
+														{doc.transcriptStatus === "completed" && (
+															<Button
+																variant="outline"
+																size="sm"
+																className="h-8 shrink-0 text-xs"
+																onClick={() => handleStartAnalysis(doc._id)}
+																title={
+																	doc.structuredOutputStatus === "completed"
+																		? "Re-analyze"
+																		: "Start analysis"
+																}
+															>
+																<Sparkles className="h-3 w-3 mr-1" />
+																{doc.structuredOutputStatus === "completed" ? "Re-analyze" : "Analyze"}
+															</Button>
+														)}
 
 															{/* Download DOCX Button - Only show when structuredOutputStatus is completed */}
 															{doc.structuredOutputStatus === "completed" && (
@@ -548,10 +579,150 @@ function PatientPage() {
 															>
 																<Trash2 className="h-4 w-4" />
 															</Button>
+
+														{/* Show Analysis Toggle - Show when transcript is completed */}
+														{doc.transcriptStatus === "completed" && (
+															<CollapsibleTrigger asChild>
+																<Button
+																	variant="ghost"
+																	size="sm"
+																	className="h-8 shrink-0 text-xs gap-1"
+																>
+																	{isExpanded ? "Hide" : "Show"} Details
+																	<ChevronDown
+																		className={`h-3 w-3 transition-transform ${
+																			isExpanded ? "rotate-180" : ""
+																		}`}
+																	/>
+																</Button>
+															</CollapsibleTrigger>
+														)}
 														</div>
 													</div>
+
+												{/* Collapsible Details Section */}
+												{doc.transcriptStatus === "completed" && (
+													<CollapsibleContent className="pt-3 border-t mt-3">
+														<div className="space-y-3 text-sm">
+															{/* Transcript */}
+															{doc.transcript && (
+																<div>
+																	<h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1">
+																		Transcripție
+																	</h4>
+																	<p className="text-sm whitespace-pre-wrap">{doc.transcript}</p>
+																</div>
+															)}
+
+															{/* Separator if both transcript and analysis exist */}
+															{doc.transcript && doc.structuredOutput && (
+																<div className="border-t my-3" />
+															)}
+
+														{/* Analysis Results - Only show if completed */}
+														{!doc.structuredOutput && doc.structuredOutputStatus === "completed" && (
+															<div className="text-sm text-muted-foreground italic">
+																Analysis completed but no structured data was extracted. Try re-analyzing.
+															</div>
+														)}
+
+														{/* Structured Analysis Data */}
+														{doc.structuredOutput && (
+															<>
+																{/* Diagnosis */}
+																{doc.structuredOutput.diagnosis && (
+																	<div>
+																		<h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1">
+																			Diagnostic
+																		</h4>
+																		<p className="text-sm">
+																			{doc.structuredOutput.diagnosis.main}
+																		</p>
+																		{doc.structuredOutput.diagnosis.icd10Code && (
+																			<p className="text-xs text-muted-foreground mt-1">
+																				ICD-10: {doc.structuredOutput.diagnosis.icd10Code}
+																			</p>
+																		)}
+																	</div>
+																)}
+
+																{/* Complaints */}
+																{doc.structuredOutput.complaints?.chief && (
+																	<div>
+																		<h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1">
+																			Plângeri
+																		</h4>
+																		<p className="text-sm">{doc.structuredOutput.complaints.chief}</p>
+																		{doc.structuredOutput.complaints.symptoms &&
+																			doc.structuredOutput.complaints.symptoms.length > 0 && (
+																				<ul className="text-xs text-muted-foreground mt-1 list-disc list-inside">
+																					{doc.structuredOutput.complaints.symptoms.map(
+																						(symptom: string, idx: number) => (
+																							<li key={idx}>{symptom}</li>
+																						),
+																					)}
+																				</ul>
+																			)}
+																	</div>
+																)}
+
+																{/* Treatment */}
+																{doc.structuredOutput.treatment?.medications &&
+																	doc.structuredOutput.treatment.medications.length > 0 && (
+																		<div>
+																			<h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1">
+																				Tratament
+																			</h4>
+																			<div className="space-y-2">
+																				{doc.structuredOutput.treatment.medications.map(
+																					(med: any, idx: number) => (
+																						<div key={idx} className="text-sm">
+																							<span className="font-medium">{med.name}</span> -{" "}
+																							{med.dosage}, {med.frequency}
+																							{med.duration && <span> ({med.duration})</span>}
+																						</div>
+																					),
+																				)}
+																			</div>
+																		</div>
+																	)}
+
+																{/* Recommendations */}
+																{doc.structuredOutput.recommendations?.lifestyle &&
+																	doc.structuredOutput.recommendations.lifestyle.length > 0 && (
+																		<div>
+																			<h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1">
+																				Recomandări
+																			</h4>
+																			<ul className="text-sm list-disc list-inside">
+																				{doc.structuredOutput.recommendations.lifestyle.map(
+																					(rec: string, idx: number) => (
+																						<li key={idx}>{rec}</li>
+																					),
+																				)}
+																			</ul>
+																		</div>
+																	)}
+
+															{/* Clinical Notes */}
+															{doc.structuredOutput.clinicalNotes?.conclusion && (
+																<div>
+																	<h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1">
+																		Concluzii
+																	</h4>
+																	<p className="text-sm">
+																		{doc.structuredOutput.clinicalNotes.conclusion}
+																	</p>
+																</div>
+															)}
+															</>
+														)}
+														</div>
+													</CollapsibleContent>
+												)}
 												</CardContent>
 											</Card>
+											</Collapsible>
 										);
 									})}
 								</div>
