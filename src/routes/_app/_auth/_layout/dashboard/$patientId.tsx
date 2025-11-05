@@ -1,6 +1,19 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMutation, useQuery } from "convex/react";
-import { Calendar, Mail, Pause, Pencil, Phone, Play, Trash2, User } from "lucide-react";
+import { useMutation, useQuery, useAction } from "convex/react";
+import {
+	Calendar,
+	Download,
+	Mail,
+	Pause,
+	Pencil,
+	Phone,
+	Play,
+	Trash2,
+	User,
+	FileText,
+	Sparkles,
+	ChevronDown,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
@@ -16,9 +29,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { EditPatientDialog } from "@/routes/_app/_auth/-components/EditPatientDialog";
 import { RecordingUpload } from "@/routes/_app/_auth/-components/RecordingUpload";
 import { loadRecording } from "@/routes/_app/_auth/-components/RecordingPlayer";
+import { generateMedicalDocx } from "@/lib/docx-generator";
 import { api } from "~/convex/_generated/api";
 import type { Id } from "~/convex/_generated/dataModel";
 
@@ -37,6 +52,7 @@ function PatientPage() {
 	const [isDeletingDocument, setIsDeletingDocument] = useState(false);
 	const [currentlyPlayingId, setCurrentlyPlayingId] = useState<string | null>(null);
 	const [isPlaying, setIsPlaying] = useState(false);
+	const [expandedDocuments, setExpandedDocuments] = useState<Set<string>>(new Set());
 
 	// Fetch patient data from Convex
 	const patient = useQuery(api.patients.getPatient, {
@@ -47,6 +63,8 @@ function PatientPage() {
 	});
 	const deletePatient = useMutation(api.patients.deletePatient);
 	const deleteDiagnosisDocument = useMutation(api.diagnosisDocuments.deleteDiagnosisDocument);
+	const generateTranscript = useAction(api.transcript.generateTranscript);
+	const generateStructuredOutput = useAction(api.structuredOutput.generateStructuredOutput);
 
 	// Compute full name early for use in effects
 	const fullName = patient ? `${patient.name} ${patient.surname}` : "";
@@ -191,6 +209,58 @@ function PatientPage() {
 		}
 	};
 
+	const handleStartTranscription = async (documentId: string) => {
+		try {
+			toast.loading("Starting transcription...");
+			await generateTranscript({ documentId: documentId as Id<"diagnosisDocuments"> });
+			toast.dismiss();
+			toast.success("Transcription started successfully");
+		} catch (error) {
+			toast.dismiss();
+			toast.error(error instanceof Error ? error.message : "Failed to start transcription");
+			console.error("Error starting transcription:", error);
+		}
+	};
+
+	const handleStartAnalysis = async (documentId: string) => {
+		try {
+			toast.loading("Starting analysis...");
+			await generateStructuredOutput({
+				documentId: documentId as Id<"diagnosisDocuments">,
+			});
+			toast.dismiss();
+			toast.success("Analysis started successfully");
+		} catch (error) {
+			toast.dismiss();
+			toast.error(error instanceof Error ? error.message : "Failed to start analysis");
+			console.error("Error starting analysis:", error);
+		}
+	};
+
+	const handleDownloadDocx = async (doc: any) => {
+		try {
+			if (!doc.structuredOutput) {
+				toast.error("No structured medical data available for this document");
+				return;
+			}
+
+			toast.loading("Generating DOCX file...");
+
+			// Format the date for the filename
+			const date = new Date(doc.dateCreated).toLocaleDateString("ro-RO");
+
+			// Generate and download the DOCX file
+			await generateMedicalDocx(doc.structuredOutput, fullName, date);
+
+			toast.dismiss();
+			toast.success("DOCX file downloaded successfully");
+		} catch (error) {
+			toast.dismiss();
+			toast.error(error instanceof Error ? error.message : "Failed to generate DOCX file");
+			console.error("Error generating DOCX:", error);
+		}
+	};
+
 	if (patient === undefined) {
 		return (
 			<div className="flex h-full items-center justify-center p-8">
@@ -327,133 +397,345 @@ function PatientPage() {
 									{diagnosisDocuments.map((doc) => {
 										const isCurrentRecording = currentlyPlayingId === doc._id;
 										const isActiveAndPlaying = isCurrentRecording && isPlaying;
+										const isExpanded = expandedDocuments.has(doc._id);
+										const toggleExpanded = () => {
+											setExpandedDocuments((prev) => {
+												const next = new Set(prev);
+												if (next.has(doc._id)) {
+													next.delete(doc._id);
+												} else {
+													next.add(doc._id);
+												}
+												return next;
+											});
+										};
+
 										return (
-											<Card
-												key={doc._id}
-												className={`overflow-hidden transition-all ${
-													isCurrentRecording ? "ring-2 ring-primary shadow-lg" : ""
-												}`}
-											>
-												<CardContent className="p-3">
-													<div className="flex items-center gap-3 justify-between">
-														{/* Left side: Play button and Date */}
-														<div className="flex items-center gap-3 min-w-0">
-															{/* Play/Pause Button */}
-															{doc.fileUrl && (
+											<Collapsible key={doc._id} open={isExpanded} onOpenChange={toggleExpanded}>
+												<Card
+													className={`overflow-hidden transition-all ${
+														isCurrentRecording ? "ring-2 ring-primary shadow-lg" : ""
+													}`}
+												>
+													<CardContent className="p-3">
+														<div className="flex items-center gap-3 justify-between">
+															{/* Left side: Play button and Date */}
+															<div className="flex items-center gap-3 min-w-0">
+																{/* Play/Pause Button */}
+																{doc.fileUrl && (
+																	<Button
+																		variant="ghost"
+																		size="icon"
+																		className="h-8 w-8 shrink-0"
+																		onClick={() => {
+																			if (isActiveAndPlaying) {
+																				// If this recording is currently playing, pause it
+																				const win = window as any;
+																				if (win.togglePlayPause) {
+																					win.togglePlayPause();
+																				}
+																			} else if (isCurrentRecording && !isPlaying) {
+																				// If this recording is loaded but paused, resume it
+																				const win = window as any;
+																				if (win.togglePlayPause) {
+																					win.togglePlayPause();
+																				}
+																			} else {
+																				// Load and play this recording
+																				loadRecording({
+																					id: doc._id,
+																					patientId: doc.patientId,
+																					patientName: fullName,
+																					recording: doc.fileUrl || "",
+																					createdAt: new Date(doc.dateCreated),
+																				});
+																				setCurrentlyPlayingId(doc._id);
+																				window.dispatchEvent(new Event("recordingChanged"));
+																			}
+																		}}
+																	>
+																		{isActiveAndPlaying ? (
+																			<Pause className="h-4 w-4 fill-current" />
+																		) : (
+																			<Play className="h-4 w-4" />
+																		)}
+																	</Button>
+																)}
+
+																{/* Date & Time */}
+																<span className="text-sm font-medium truncate">
+																	{new Date(doc.dateCreated).toLocaleDateString("en-US", {
+																		month: "short",
+																		day: "numeric",
+																		year: "numeric",
+																		hour: "2-digit",
+																		minute: "2-digit",
+																	})}
+																</span>
+															</div>
+
+															{/* Right side: Status badges, Duration, File size, Action buttons */}
+															<div className="flex items-center gap-3 flex-wrap justify-end">
+																{/* Status Badges */}
+																<div className="flex items-center gap-1.5 flex-wrap">
+																	<div className="flex items-center gap-1">
+																		<span className="text-xs text-muted-foreground">
+																			Transcript:
+																		</span>
+																		<Badge
+																			variant={
+																				doc.transcriptStatus === "completed"
+																					? "default"
+																					: "secondary"
+																			}
+																			className="text-xs py-0 h-5"
+																		>
+																			{doc.transcriptStatus || "pending"}
+																		</Badge>
+																	</div>
+																	<div className="flex items-center gap-1">
+																		<span className="text-xs text-muted-foreground">Analysis:</span>
+																		<Badge
+																			variant={
+																				doc.structuredOutputStatus === "completed"
+																					? "default"
+																					: "secondary"
+																			}
+																			className="text-xs py-0 h-5"
+																		>
+																			{doc.structuredOutputStatus || "pending"}
+																		</Badge>
+																	</div>
+																</div>
+
+																{/* Duration */}
+																{doc.audioMetadata?.duration && (
+																	<span className="text-xs text-muted-foreground whitespace-nowrap">
+																		{Math.floor(doc.audioMetadata.duration / 60)}:
+																		{Math.floor(doc.audioMetadata.duration % 60)
+																			.toString()
+																			.padStart(2, "0")}
+																	</span>
+																)}
+
+																{/* File Size */}
+																{doc.audioMetadata?.fileSize && (
+																	<span className="text-xs text-muted-foreground whitespace-nowrap">
+																		{(doc.audioMetadata.fileSize / 1024 / 1024).toFixed(1)} MB
+																	</span>
+																)}
+
+																{/* Transcribe Button - Show if transcript is pending or failed */}
+																{(doc.transcriptStatus === "pending" ||
+																	doc.transcriptStatus === "failed") && (
+																	<Button
+																		variant="outline"
+																		size="sm"
+																		className="h-8 shrink-0 text-xs"
+																		onClick={() => handleStartTranscription(doc._id)}
+																		title="Start transcription"
+																	>
+																		<FileText className="h-3 w-3 mr-1" />
+																		Transcribe
+																	</Button>
+																)}
+
+																{/* Analyze Button - Show if transcript is completed */}
+																{doc.transcriptStatus === "completed" && (
+																	<Button
+																		variant="outline"
+																		size="sm"
+																		className="h-8 shrink-0 text-xs"
+																		onClick={() => handleStartAnalysis(doc._id)}
+																		title={
+																			doc.structuredOutputStatus === "completed"
+																				? "Re-analyze"
+																				: "Start analysis"
+																		}
+																	>
+																		<Sparkles className="h-3 w-3 mr-1" />
+																		{doc.structuredOutputStatus === "completed"
+																			? "Re-analyze"
+																			: "Analyze"}
+																	</Button>
+																)}
+
+																{/* Download DOCX Button - Only show when structuredOutputStatus is completed */}
+																{doc.structuredOutputStatus === "completed" && (
+																	<Button
+																		variant="ghost"
+																		size="icon"
+																		className="h-8 w-8 shrink-0 text-primary hover:text-primary"
+																		onClick={() => handleDownloadDocx(doc)}
+																		title="Download DOCX"
+																	>
+																		<Download className="h-4 w-4" />
+																	</Button>
+																)}
+
+																{/* Delete Button */}
 																<Button
 																	variant="ghost"
 																	size="icon"
-																	className="h-8 w-8 shrink-0"
+																	className="h-8 w-8 shrink-0 text-destructive hover:text-destructive"
 																	onClick={() => {
-																		if (isActiveAndPlaying) {
-																			// If this recording is currently playing, pause it
-																			const win = window as any;
-																			if (win.togglePlayPause) {
-																				win.togglePlayPause();
-																			}
-																		} else if (isCurrentRecording && !isPlaying) {
-																			// If this recording is loaded but paused, resume it
-																			const win = window as any;
-																			if (win.togglePlayPause) {
-																				win.togglePlayPause();
-																			}
-																		} else {
-																			// Load and play this recording
-																			loadRecording({
-																				id: doc._id,
-																				patientId: doc.patientId,
-																				patientName: fullName,
-																				recording: doc.fileUrl || "",
-																				createdAt: new Date(doc.dateCreated),
-																			});
-																			setCurrentlyPlayingId(doc._id);
-																			window.dispatchEvent(new Event("recordingChanged"));
-																		}
+																		setDocumentToDelete(doc._id);
+																		setShowDeleteDocumentDialog(true);
 																	}}
 																>
-																	{isActiveAndPlaying ? (
-																		<Pause className="h-4 w-4 fill-current" />
-																	) : (
-																		<Play className="h-4 w-4" />
-																	)}
+																	<Trash2 className="h-4 w-4" />
 																</Button>
-															)}
 
-															{/* Date & Time */}
-															<span className="text-sm font-medium truncate">
-																{new Date(doc.dateCreated).toLocaleDateString("en-US", {
-																	month: "short",
-																	day: "numeric",
-																	year: "numeric",
-																	hour: "2-digit",
-																	minute: "2-digit",
-																})}
-															</span>
-														</div>
-
-														{/* Right side: Status badges, Duration, File size, and Delete button */}
-														<div className="flex items-center gap-3 flex-wrap justify-end">
-															{/* Status Badges */}
-															<div className="flex items-center gap-1.5 flex-wrap">
-																<div className="flex items-center gap-1">
-																	<span className="text-xs text-muted-foreground">Transcript:</span>
-																	<Badge
-																		variant={
-																			doc.transcriptStatus === "completed" ? "default" : "secondary"
-																		}
-																		className="text-xs py-0 h-5"
-																	>
-																		{doc.transcriptStatus || "pending"}
-																	</Badge>
-																</div>
-																<div className="flex items-center gap-1">
-																	<span className="text-xs text-muted-foreground">Analysis:</span>
-																	<Badge
-																		variant={
-																			doc.structuredOutputStatus === "completed"
-																				? "default"
-																				: "secondary"
-																		}
-																		className="text-xs py-0 h-5"
-																	>
-																		{doc.structuredOutputStatus || "pending"}
-																	</Badge>
-																</div>
+																{/* Show Analysis Toggle - Show when transcript is completed */}
+																{doc.transcriptStatus === "completed" && (
+																	<CollapsibleTrigger asChild>
+																		<Button
+																			variant="ghost"
+																			size="sm"
+																			className="h-8 shrink-0 text-xs gap-1"
+																		>
+																			{isExpanded ? "Hide" : "Show"} Details
+																			<ChevronDown
+																				className={`h-3 w-3 transition-transform ${
+																					isExpanded ? "rotate-180" : ""
+																				}`}
+																			/>
+																		</Button>
+																	</CollapsibleTrigger>
+																)}
 															</div>
-
-															{/* Duration */}
-															{doc.audioMetadata?.duration && (
-																<span className="text-xs text-muted-foreground whitespace-nowrap">
-																	{Math.floor(doc.audioMetadata.duration / 60)}:
-																	{Math.floor(doc.audioMetadata.duration % 60)
-																		.toString()
-																		.padStart(2, "0")}
-																</span>
-															)}
-
-															{/* File Size */}
-															{doc.audioMetadata?.fileSize && (
-																<span className="text-xs text-muted-foreground whitespace-nowrap">
-																	{(doc.audioMetadata.fileSize / 1024 / 1024).toFixed(1)} MB
-																</span>
-															)}
-
-															{/* Delete Button */}
-															<Button
-																variant="ghost"
-																size="icon"
-																className="h-8 w-8 shrink-0 text-destructive hover:text-destructive"
-																onClick={() => {
-																	setDocumentToDelete(doc._id);
-																	setShowDeleteDocumentDialog(true);
-																}}
-															>
-																<Trash2 className="h-4 w-4" />
-															</Button>
 														</div>
-													</div>
-												</CardContent>
-											</Card>
+
+														{/* Collapsible Details Section */}
+														{doc.transcriptStatus === "completed" && (
+															<CollapsibleContent className="pt-3 border-t mt-3">
+																<div className="space-y-3 text-sm">
+																	{/* Transcript */}
+																	{doc.transcript && (
+																		<div>
+																			<h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1">
+																				Transcripție
+																			</h4>
+																			<p className="text-sm whitespace-pre-wrap">
+																				{doc.transcript}
+																			</p>
+																		</div>
+																	)}
+
+																	{/* Separator if both transcript and analysis exist */}
+																	{doc.transcript && doc.structuredOutput && (
+																		<div className="border-t my-3" />
+																	)}
+
+																	{/* Analysis Results - Only show if completed */}
+																	{!doc.structuredOutput &&
+																		doc.structuredOutputStatus === "completed" && (
+																			<div className="text-sm text-muted-foreground italic">
+																				Analysis completed but no structured data was extracted. Try
+																				re-analyzing.
+																			</div>
+																		)}
+
+																	{/* Structured Analysis Data */}
+																	{doc.structuredOutput && (
+																		<>
+																			{/* Diagnosis */}
+																			{doc.structuredOutput.diagnosis && (
+																				<div>
+																					<h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1">
+																						Diagnostic
+																					</h4>
+																					<p className="text-sm">
+																						{doc.structuredOutput.diagnosis.main}
+																					</p>
+																					{doc.structuredOutput.diagnosis.icd10Code && (
+																						<p className="text-xs text-muted-foreground mt-1">
+																							ICD-10: {doc.structuredOutput.diagnosis.icd10Code}
+																						</p>
+																					)}
+																				</div>
+																			)}
+
+																			{/* Complaints */}
+																			{doc.structuredOutput.complaints?.chief && (
+																				<div>
+																					<h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1">
+																						Plângeri
+																					</h4>
+																					<p className="text-sm">
+																						{doc.structuredOutput.complaints.chief}
+																					</p>
+																					{doc.structuredOutput.complaints.symptoms &&
+																						doc.structuredOutput.complaints.symptoms.length > 0 && (
+																							<ul className="text-xs text-muted-foreground mt-1 list-disc list-inside">
+																								{doc.structuredOutput.complaints.symptoms.map(
+																									(symptom: string, idx: number) => (
+																										<li key={idx}>{symptom}</li>
+																									),
+																								)}
+																							</ul>
+																						)}
+																				</div>
+																			)}
+
+																			{/* Treatment */}
+																			{doc.structuredOutput.treatment?.medications &&
+																				doc.structuredOutput.treatment.medications.length > 0 && (
+																					<div>
+																						<h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1">
+																							Tratament
+																						</h4>
+																						<div className="space-y-2">
+																							{doc.structuredOutput.treatment.medications.map(
+																								(med: any, idx: number) => (
+																									<div key={idx} className="text-sm">
+																										<span className="font-medium">{med.name}</span>{" "}
+																										- {med.dosage}, {med.frequency}
+																										{med.duration && <span> ({med.duration})</span>}
+																									</div>
+																								),
+																							)}
+																						</div>
+																					</div>
+																				)}
+
+																			{/* Recommendations */}
+																			{doc.structuredOutput.recommendations?.lifestyle &&
+																				doc.structuredOutput.recommendations.lifestyle.length >
+																					0 && (
+																					<div>
+																						<h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1">
+																							Recomandări
+																						</h4>
+																						<ul className="text-sm list-disc list-inside">
+																							{doc.structuredOutput.recommendations.lifestyle.map(
+																								(rec: string, idx: number) => (
+																									<li key={idx}>{rec}</li>
+																								),
+																							)}
+																						</ul>
+																					</div>
+																				)}
+
+																			{/* Clinical Notes */}
+																			{doc.structuredOutput.clinicalNotes?.conclusion && (
+																				<div>
+																					<h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1">
+																						Concluzii
+																					</h4>
+																					<p className="text-sm">
+																						{doc.structuredOutput.clinicalNotes.conclusion}
+																					</p>
+																				</div>
+																			)}
+																		</>
+																	)}
+																</div>
+															</CollapsibleContent>
+														)}
+													</CardContent>
+												</Card>
+											</Collapsible>
 										);
 									})}
 								</div>

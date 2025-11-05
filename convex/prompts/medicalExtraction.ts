@@ -104,9 +104,7 @@ Output:
       "bloodPressure": "135/80 mmHg",
       "heartRate": 78
     },
-    "systemicExamination": {
-      "musculoscheletal": "Durere la palpare L4-L5, test Lasègue pozitiv la stânga"
-    }
+    "systemicExamination": "Musculoscheletal: Durere la palpare L4-L5, test Lasègue pozitiv la stânga"
   },
   "treatment": {
     "medications": [{
@@ -169,9 +167,7 @@ export const TEMPLATES = {
       "respiratoryRate": ...,
       "oxygenSaturation": ...
     },
-    "systemicExamination": {
-      "cardiovascular": "..."
-    }
+    "systemicExamination": "Descriere examen fizic pe sisteme (ex: Cardiovascular: ..., Respirator: ..., etc)"
   },
   "investigations": {
     "laboratory": [{
@@ -243,9 +239,7 @@ export const TEMPLATES = {
       "respiratoryRate": ...,
       "oxygenSaturation": ...
     },
-    "systemicExamination": {
-      "musculoscheletal": "..."
-    }
+    "systemicExamination": "Musculoscheletal: ..."
   },
   "investigations": {
     "laboratory": [{
@@ -317,11 +311,7 @@ export const TEMPLATES = {
       "respiratoryRate": ...,
       "oxygenSaturation": ...
     },
-    "systemicExamination": {
-      "cardiovascular": "...",
-      "respiratory": "...",
-      "abdomen": "..."
-    }
+    "systemicExamination": "Cardiovascular: ..., Respirator: ..., Abdomen: ..."
   },
   "investigations": {
     "laboratory": [{
@@ -393,9 +383,7 @@ export const TEMPLATES = {
       "respiratoryRate": ...,
       "oxygenSaturation": ...
     },
-    "systemicExamination": {
-      "respiratory": "..."
-    }
+    "systemicExamination": "Respiratory: ..."
   },
   "investigations": {
     "laboratory": [{
