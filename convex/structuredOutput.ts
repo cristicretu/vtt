@@ -43,32 +43,70 @@ export const generateStructuredOutput = action({
 			const userPrompt = generateExtractionPrompt(document.transcript, template);
 
 			const { text } = await generateText({
-				model: google("gemini-2.5-flash-exp"),
+				model: google("gemini-2.5-flash"),
 				system: SYSTEM_PROMPT,
 				prompt: userPrompt,
 				temperature: 0.1,
 			});
 
-			let structuredOutput;
-			try {
-				const cleanedText = text.trim();
-				const jsonText = cleanedText
-					.replace(/^```json\s*/i, "")
-					.replace(/^```\s*/, "")
-					.replace(/```\s*$/, "");
+		let structuredOutput: any;
+		try {
+			const cleanedText = text.trim();
+			const jsonText = cleanedText
+				.replace(/^```json\s*/i, "")
+				.replace(/^```\s*/, "")
+				.replace(/```\s*$/, "");
 
-				structuredOutput = JSON.parse(jsonText);
-			} catch (parseError) {
-				console.warn("JSON parsing failed, attempting repair:", parseError);
-				try {
-					const repairedJson = jsonrepair(text);
-					structuredOutput = JSON.parse(repairedJson);
-				} catch (repairError) {
-					throw new Error(
-						`Failed to parse LLM output as JSON: ${parseError}. Repair also failed: ${repairError}`,
-					);
-				}
+			structuredOutput = JSON.parse(jsonText);
+		} catch (parseError: any) {
+			console.warn("JSON parsing failed, attempting repair:", parseError);
+			try {
+				const repairedJson = jsonrepair(text);
+				structuredOutput = JSON.parse(repairedJson);
+			} catch (repairError: any) {
+				throw new Error(
+					`Failed to parse LLM output as JSON: ${parseError}. Repair also failed: ${repairError}`,
+				);
 			}
+		}
+
+		// Normalize array fields - convert single objects to arrays and strings to objects
+		if (structuredOutput?.investigations?.imaging) {
+			if (!Array.isArray(structuredOutput.investigations.imaging)) {
+				structuredOutput.investigations.imaging = [structuredOutput.investigations.imaging];
+			}
+			// Convert string items to objects
+			structuredOutput.investigations.imaging = structuredOutput.investigations.imaging.map((item: any) => {
+				if (typeof item === 'string') {
+					return { type: 'imaging', findings: item };
+				}
+				return item;
+			});
+		}
+		if (structuredOutput?.investigations?.laboratory) {
+			if (!Array.isArray(structuredOutput.investigations.laboratory)) {
+				structuredOutput.investigations.laboratory = [structuredOutput.investigations.laboratory];
+			}
+			// Convert string items to objects
+			structuredOutput.investigations.laboratory = structuredOutput.investigations.laboratory.map((item: any) => {
+				if (typeof item === 'string') {
+					return { test: 'test', result: item };
+				}
+				return item;
+			});
+		}
+		if (structuredOutput?.investigations?.other) {
+			if (!Array.isArray(structuredOutput.investigations.other)) {
+				structuredOutput.investigations.other = [structuredOutput.investigations.other];
+			}
+			// Convert string items to objects
+			structuredOutput.investigations.other = structuredOutput.investigations.other.map((item: any) => {
+				if (typeof item === 'string') {
+					return { type: 'other', findings: item };
+				}
+				return item;
+			});
+		}
 
 			const validatedOutput = medicalOutputSchema.parse(structuredOutput);
 
@@ -167,7 +205,7 @@ export const testExtraction = action({
 		transcript: v.string(),
 		specialization: v.optional(v.string()),
 	},
-	handler: async (ctx, args) => {
+	handler: async (_ctx, args) => {
 		const template = args.specialization
 			? getTemplateBySpecialization(args.specialization)
 			: undefined;
@@ -175,7 +213,7 @@ export const testExtraction = action({
 		const userPrompt = generateExtractionPrompt(args.transcript, template);
 
 		const { text } = await generateText({
-			model: google("gemini-2.0-flash-exp"),
+			model: google("gemini-2.5-flash"),
 			system: SYSTEM_PROMPT,
 			prompt: userPrompt,
 			temperature: 0.1,
@@ -188,12 +226,50 @@ export const testExtraction = action({
 			.replace(/^```\s*/, "")
 			.replace(/```\s*$/, "");
 
-		let structuredOutput;
+		let structuredOutput: any;
 		try {
 			structuredOutput = JSON.parse(jsonText);
-		} catch (parseError) {
+		} catch {
 			const repairedJson = jsonrepair(jsonText);
 			structuredOutput = JSON.parse(repairedJson);
+		}
+
+		// Normalize array fields - convert single objects to arrays and strings to objects
+		if (structuredOutput?.investigations?.imaging) {
+			if (!Array.isArray(structuredOutput.investigations.imaging)) {
+				structuredOutput.investigations.imaging = [structuredOutput.investigations.imaging];
+			}
+			// Convert string items to objects
+			structuredOutput.investigations.imaging = structuredOutput.investigations.imaging.map((item: any) => {
+				if (typeof item === 'string') {
+					return { type: 'imaging', findings: item };
+				}
+				return item;
+			});
+		}
+		if (structuredOutput?.investigations?.laboratory) {
+			if (!Array.isArray(structuredOutput.investigations.laboratory)) {
+				structuredOutput.investigations.laboratory = [structuredOutput.investigations.laboratory];
+			}
+			// Convert string items to objects
+			structuredOutput.investigations.laboratory = structuredOutput.investigations.laboratory.map((item: any) => {
+				if (typeof item === 'string') {
+					return { test: 'test', result: item };
+				}
+				return item;
+			});
+		}
+		if (structuredOutput?.investigations?.other) {
+			if (!Array.isArray(structuredOutput.investigations.other)) {
+				structuredOutput.investigations.other = [structuredOutput.investigations.other];
+			}
+			// Convert string items to objects
+			structuredOutput.investigations.other = structuredOutput.investigations.other.map((item: any) => {
+				if (typeof item === 'string') {
+					return { type: 'other', findings: item };
+				}
+				return item;
+			});
 		}
 
 		const validatedOutput = medicalOutputSchema.parse(structuredOutput);

@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMutation, useQuery } from "convex/react";
-import { Calendar, Download, Mail, Pause, Pencil, Phone, Play, Trash2, User } from "lucide-react";
+import { useMutation, useQuery, useAction } from "convex/react";
+import { Calendar, Download, Mail, Pause, Pencil, Phone, Play, Trash2, User, FileText, Sparkles } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
@@ -48,6 +48,8 @@ function PatientPage() {
 	});
 	const deletePatient = useMutation(api.patients.deletePatient);
 	const deleteDiagnosisDocument = useMutation(api.diagnosisDocuments.deleteDiagnosisDocument);
+	const generateTranscript = useAction(api.transcript.generateTranscript);
+	const generateStructuredOutput = useAction(api.structuredOutput.generateStructuredOutput);
 
 	// Compute full name early for use in effects
 	const fullName = patient ? `${patient.name} ${patient.surname}` : "";
@@ -189,6 +191,35 @@ function PatientPage() {
 			toast.error(error instanceof Error ? error.message : "Failed to delete medical entry");
 		} finally {
 			setIsDeletingDocument(false);
+		}
+	};
+
+	const handleStartTranscription = async (documentId: string) => {
+		try {
+			toast.loading("Starting transcription...");
+			await generateTranscript({ documentId: documentId as Id<"diagnosisDocuments"> });
+			toast.dismiss();
+			toast.success("Transcription started successfully");
+		} catch (error) {
+			toast.dismiss();
+			toast.error(error instanceof Error ? error.message : "Failed to start transcription");
+			console.error("Error starting transcription:", error);
+		}
+	};
+
+	const handleStartAnalysis = async (documentId: string) => {
+		try {
+			toast.loading("Starting analysis...");
+			await generateStructuredOutput({ 
+				documentId: documentId as Id<"diagnosisDocuments">,
+				specialization: patient?.specialisation
+			});
+			toast.dismiss();
+			toast.success("Analysis started successfully");
+		} catch (error) {
+			toast.dismiss();
+			toast.error(error instanceof Error ? error.message : "Failed to start analysis");
+			console.error("Error starting analysis:", error);
 		}
 	};
 
@@ -416,7 +447,7 @@ function PatientPage() {
 															</span>
 														</div>
 
-														{/* Right side: Status badges, Duration, File size, Download and Delete buttons */}
+														{/* Right side: Status badges, Duration, File size, Action buttons */}
 														<div className="flex items-center gap-3 flex-wrap justify-end">
 															{/* Status Badges */}
 															<div className="flex items-center gap-1.5 flex-wrap">
@@ -461,6 +492,35 @@ function PatientPage() {
 																<span className="text-xs text-muted-foreground whitespace-nowrap">
 																	{(doc.audioMetadata.fileSize / 1024 / 1024).toFixed(1)} MB
 																</span>
+															)}
+
+															{/* Transcribe Button - Show if transcript is pending or failed */}
+															{(doc.transcriptStatus === "pending" || doc.transcriptStatus === "failed") && (
+																<Button
+																	variant="outline"
+																	size="sm"
+																	className="h-8 shrink-0 text-xs"
+																	onClick={() => handleStartTranscription(doc._id)}
+																	title="Start transcription"
+																>
+																	<FileText className="h-3 w-3 mr-1" />
+																	Transcribe
+																</Button>
+															)}
+
+															{/* Analyze Button - Show if transcript is completed and analysis is pending or failed */}
+															{doc.transcriptStatus === "completed" && 
+															 (doc.structuredOutputStatus === "pending" || doc.structuredOutputStatus === "failed") && (
+																<Button
+																	variant="outline"
+																	size="sm"
+																	className="h-8 shrink-0 text-xs"
+																	onClick={() => handleStartAnalysis(doc._id)}
+																	title="Start analysis"
+																>
+																	<Sparkles className="h-3 w-3 mr-1" />
+																	Analyze
+																</Button>
 															)}
 
 															{/* Download DOCX Button - Only show when structuredOutputStatus is completed */}
