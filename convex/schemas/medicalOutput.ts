@@ -44,9 +44,9 @@ export const medicalOutputSchema = z.object({
 				})
 				.optional(),
 			systemicExamination: z
-				.record(z.string(), z.string())
+				.string()
 				.optional()
-				.describe("Examen pe aparate/sisteme"),
+				.describe("Examen pe aparate/sisteme - detalii despre examinarea fizică"),
 		})
 		.nullish(),
 
@@ -211,7 +211,7 @@ export const medicalOutputValidator = v.object({
 					oxygenSaturation: v.optional(v.number()),
 				}),
 			),
-			systemicExamination: v.optional(v.any()),
+			systemicExamination: v.optional(v.string()),
 		}),
 	),
 

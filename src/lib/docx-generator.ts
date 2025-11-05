@@ -117,36 +117,38 @@ export async function generateMedicalDocx(
 	}
 
 	// DIAGNOSIS
-	sections.push(createHeading("DIAGNOSTIC"));
+	if (data.diagnosis) {
+		sections.push(createHeading("DIAGNOSTIC"));
 
-	if (data.diagnosis.main) {
-		sections.push(
-			new Paragraph({
-				children: [
-					new TextRun({ text: "Diagnostic principal: ", bold: true }),
-					new TextRun({ text: data.diagnosis.main }),
-				],
-				spacing: { after: 120 },
-			}),
-		);
-	}
+		if (data.diagnosis.main) {
+			sections.push(
+				new Paragraph({
+					children: [
+						new TextRun({ text: "Diagnostic principal: ", bold: true }),
+						new TextRun({ text: data.diagnosis.main }),
+					],
+					spacing: { after: 120 },
+				}),
+			);
+		}
 
-	if (data.diagnosis.icd10Code) {
-		sections.push(
-			new Paragraph({
-				children: [
-					new TextRun({ text: "Cod ICD-10: ", bold: true }),
-					new TextRun({ text: data.diagnosis.icd10Code }),
-				],
-				spacing: { after: 120 },
-			}),
-		);
-	}
+		if (data.diagnosis.icd10Code) {
+			sections.push(
+				new Paragraph({
+					children: [
+						new TextRun({ text: "Cod ICD-10: ", bold: true }),
+						new TextRun({ text: data.diagnosis.icd10Code }),
+					],
+					spacing: { after: 120 },
+				}),
+			);
+		}
 
-	if (data.diagnosis.additional && data.diagnosis.additional.length > 0) {
-		sections.push(createParagraph("Diagnostice secundare:", true));
-		for (const diag of data.diagnosis.additional) {
-			sections.push(createBullet(diag));
+		if (data.diagnosis.additional && data.diagnosis.additional.length > 0) {
+			sections.push(createParagraph("Diagnostice secundare:", true));
+			for (const diag of data.diagnosis.additional) {
+				sections.push(createBullet(diag));
+			}
 		}
 	}
 
@@ -245,13 +247,11 @@ export async function generateMedicalDocx(
 			}
 		}
 
-		// Systemic Examination
-		if (data.examination.systemicExamination) {
-			sections.push(createParagraph("Examen pe aparate/sisteme:", true));
-			for (const [system, findings] of Object.entries(data.examination.systemicExamination)) {
-				sections.push(createBullet(`${system}: ${findings}`));
-			}
-		}
+	// Systemic Examination
+	if (data.examination.systemicExamination) {
+		sections.push(createParagraph("Examen pe aparate/sisteme:", true));
+		sections.push(createParagraph(data.examination.systemicExamination));
+	}
 	}
 
 	// INVESTIGATIONS
