@@ -247,11 +247,11 @@ export async function generateMedicalDocx(
 			}
 		}
 
-	// Systemic Examination
-	if (data.examination.systemicExamination) {
-		sections.push(createParagraph("Examen pe aparate/sisteme:", true));
-		sections.push(createParagraph(data.examination.systemicExamination));
-	}
+		// Systemic Examination
+		if (data.examination.systemicExamination) {
+			sections.push(createParagraph("Examen pe aparate/sisteme:", true));
+			sections.push(createParagraph(data.examination.systemicExamination));
+		}
 	}
 
 	// INVESTIGATIONS

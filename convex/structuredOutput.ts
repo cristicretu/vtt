@@ -39,7 +39,7 @@ export const generateStructuredOutput = action({
 				? getTemplateBySpecialization(args.specialization)
 				: undefined;
 
-		const userPrompt = generateExtractionPrompt(document.transcript, template);
+			const userPrompt = generateExtractionPrompt(document.transcript, template);
 
 			// Use generateObject instead of generateText for enforced schema validation
 			const { object: structuredOutput } = await generateObject({
