@@ -8,3 +8,6 @@ export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 // Google OAuth
 export const AUTH_GOOGLE_ID = process.env.AUTH_GOOGLE_ID;
 export const AUTH_GOOGLE_SECRET = process.env.AUTH_GOOGLE_SECRET;
+
+// OpenAI
+export const OPENAI_API_KEY = process.env.OPENAI_API_KEY;

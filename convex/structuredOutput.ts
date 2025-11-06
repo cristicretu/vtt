@@ -1,5 +1,5 @@
 import { google } from "@ai-sdk/google";
-import { generateText } from "ai";
+import { generateObject } from "ai";
 import { action, internalMutation, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
@@ -9,7 +9,6 @@ import {
 	generateExtractionPrompt,
 	getTemplateBySpecialization,
 } from "./prompts/medicalExtraction";
-import { jsonrepair } from "jsonrepair";
 import { query } from "./_generated/server";
 
 export const generateStructuredOutput = action({
@@ -42,45 +41,26 @@ export const generateStructuredOutput = action({
 
 			const userPrompt = generateExtractionPrompt(document.transcript, template);
 
-			const { text } = await generateText({
-				model: google("gemini-2.5-flash-exp"),
+			// Use generateObject instead of generateText for enforced schema validation
+			const { object: structuredOutput } = await generateObject({
+				model: google("gemini-2.5-flash"),
+				schema: medicalOutputSchema,
 				system: SYSTEM_PROMPT,
 				prompt: userPrompt,
 				temperature: 0.1,
 			});
 
-			let structuredOutput;
-			try {
-				const cleanedText = text.trim();
-				const jsonText = cleanedText
-					.replace(/^```json\s*/i, "")
-					.replace(/^```\s*/, "")
-					.replace(/```\s*$/, "");
-
-				structuredOutput = JSON.parse(jsonText);
-			} catch (parseError) {
-				console.warn("JSON parsing failed, attempting repair:", parseError);
-				try {
-					const repairedJson = jsonrepair(text);
-					structuredOutput = JSON.parse(repairedJson);
-				} catch (repairError) {
-					throw new Error(
-						`Failed to parse LLM output as JSON: ${parseError}. Repair also failed: ${repairError}`,
-					);
-				}
-			}
-
-			const validatedOutput = medicalOutputSchema.parse(structuredOutput);
+			// Output is already validated by generateObject, no need to parse or validate again
 
 			await ctx.runMutation(internal.structuredOutput.updateStructuredOutput, {
 				documentId: args.documentId,
-				structuredOutput: validatedOutput,
+				structuredOutput,
 				status: "completed",
 			});
 
 			return {
 				success: true,
-				structuredOutput: validatedOutput,
+				structuredOutput,
 			};
 		} catch (error) {
 			await ctx.runMutation(internal.structuredOutput.updateStructuredOutputStatus, {
@@ -167,40 +147,25 @@ export const testExtraction = action({
 		transcript: v.string(),
 		specialization: v.optional(v.string()),
 	},
-	handler: async (ctx, args) => {
+	handler: async (_ctx, args) => {
 		const template = args.specialization
 			? getTemplateBySpecialization(args.specialization)
 			: undefined;
 
 		const userPrompt = generateExtractionPrompt(args.transcript, template);
 
-		const { text } = await generateText({
-			model: google("gemini-2.0-flash-exp"),
+		// Use generateObject instead of generateText for enforced schema validation
+		const result = await generateObject({
+			model: google("gemini-2.5-flash"),
+			schema: medicalOutputSchema,
 			system: SYSTEM_PROMPT,
 			prompt: userPrompt,
 			temperature: 0.1,
 		});
 
-		// Try to parse the response
-		const cleanedText = text.trim();
-		const jsonText = cleanedText
-			.replace(/^```json\s*/i, "")
-			.replace(/^```\s*/, "")
-			.replace(/```\s*$/, "");
-
-		let structuredOutput;
-		try {
-			structuredOutput = JSON.parse(jsonText);
-		} catch (parseError) {
-			const repairedJson = jsonrepair(jsonText);
-			structuredOutput = JSON.parse(repairedJson);
-		}
-
-		const validatedOutput = medicalOutputSchema.parse(structuredOutput);
-
 		return {
-			raw: text,
-			parsed: validatedOutput,
+			raw: JSON.stringify(result.object, null, 2),
+			parsed: result.object,
 		};
 	},
 });

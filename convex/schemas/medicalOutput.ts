@@ -12,11 +12,13 @@ export const medicalOutputSchema = z.object({
 		.optional(),
 
 	// Main diagnosis section
-	diagnosis: z.object({
-		main: z.string().describe("Diagnosticul principal"),
-		additional: z.array(z.string()).optional().describe("Diagnostice secundare"),
-		icd10Code: z.string().optional().describe("Cod ICD-10"),
-	}),
+	diagnosis: z
+		.object({
+			main: z.string().describe("Diagnosticul principal"),
+			additional: z.array(z.string()).optional().describe("Diagnostice secundare"),
+			icd10Code: z.string().optional().describe("Cod ICD-10"),
+		})
+		.nullish(),
 
 	// Patient complaints and symptoms
 	complaints: z
@@ -26,7 +28,7 @@ export const medicalOutputSchema = z.object({
 			duration: z.string().optional().describe("Durata simptomelor"),
 			severity: z.enum(["ușoară", "moderată", "severă", "critică"]).optional(),
 		})
-		.optional(),
+		.nullish(),
 
 	// Physical examination findings
 	examination: z
@@ -42,11 +44,11 @@ export const medicalOutputSchema = z.object({
 				})
 				.optional(),
 			systemicExamination: z
-				.record(z.string(), z.string())
+				.string()
 				.optional()
-				.describe("Examen pe aparate/sisteme"),
+				.describe("Examen pe aparate/sisteme - detalii despre examinarea fizică"),
 		})
-		.optional(),
+		.nullish(),
 
 	// Investigations and test results
 	investigations: z
@@ -67,7 +69,7 @@ export const medicalOutputSchema = z.object({
 				.array(
 					z.object({
 						type: z.string().describe("Tipul investigației (ex: ecografie, radiografie)"),
-						findings: z.string().describe("Rezultatele"),
+						findings: z.union([z.string(), z.array(z.string())]).describe("Rezultatele"),
 						date: z.string().optional(),
 					}),
 				)
@@ -95,7 +97,7 @@ export const medicalOutputSchema = z.object({
 			allergies: z.array(z.string()).optional().describe("Alergii"),
 			medications: z.array(z.string()).optional().describe("Medicație curentă"),
 		})
-		.optional(),
+		.nullish(),
 
 	// Treatment and medications
 	treatment: z
@@ -121,7 +123,7 @@ export const medicalOutputSchema = z.object({
 				.optional()
 				.describe("Tratament non-medicamentos (ex: fizioterapie)"),
 		})
-		.optional(),
+		.nullish(),
 
 	// Recommendations and follow-up
 	recommendations: z
@@ -141,7 +143,7 @@ export const medicalOutputSchema = z.object({
 				.describe("Investigații suplimentare recomandate"),
 			warnings: z.array(z.string()).optional().describe("Avertismente importante"),
 		})
-		.optional(),
+		.nullish(),
 
 	// Clinical notes
 	clinicalNotes: z
@@ -155,12 +157,12 @@ export const medicalOutputSchema = z.object({
 	// Administrative
 	metadata: z
 		.object({
-			consultationDate: z.string().optional().describe("Data consultației"),
+			consultationDate: z.string().nullish().describe("Data consultației"),
 			consultationType: z
 				.enum(["primă consultație", "control", "urgență", "teleconsultație"])
-				.optional(),
+				.nullish(),
 			specialization: z.string().optional().describe("Specialitatea medicală"),
-			doctorName: z.string().optional().describe("Numele medicului"),
+			doctorName: z.string().nullish().describe("Numele medicului"),
 		})
 		.optional(),
 });
@@ -180,11 +182,13 @@ export const medicalOutputValidator = v.object({
 		}),
 	),
 
-	diagnosis: v.object({
-		main: v.string(),
-		additional: v.optional(v.array(v.string())),
-		icd10Code: v.optional(v.string()),
-	}),
+	diagnosis: v.optional(
+		v.object({
+			main: v.string(),
+			additional: v.optional(v.array(v.string())),
+			icd10Code: v.optional(v.string()),
+		}),
+	),
 
 	complaints: v.optional(
 		v.object({
@@ -207,7 +211,7 @@ export const medicalOutputValidator = v.object({
 					oxygenSaturation: v.optional(v.number()),
 				}),
 			),
-			systemicExamination: v.optional(v.any()),
+			systemicExamination: v.optional(v.string()),
 		}),
 	),
 
@@ -227,7 +231,7 @@ export const medicalOutputValidator = v.object({
 				v.array(
 					v.object({
 						type: v.string(),
-						findings: v.string(),
+						findings: v.union(v.string(), v.array(v.string())),
 						date: v.optional(v.string()),
 					}),
 				),

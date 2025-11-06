@@ -96,6 +96,28 @@ export const getRecordingUrl = query({
 	},
 });
 
+export const getDiagnosisDocument = query({
+	args: { documentId: v.id("diagnosisDocuments") },
+	handler: async (ctx, args) => {
+		const userId = await auth.getUserId(ctx);
+		if (!userId) {
+			throw new Error("You must be logged in.");
+		}
+
+		const document = await ctx.db.get(args.documentId);
+		if (!document) {
+			throw new Error("Document not found");
+		}
+
+		// Verify the document belongs to this doctor
+		if (document.doctorId !== userId) {
+			throw new Error("You don't have permission to view this document.");
+		}
+
+		return document;
+	},
+});
+
 export const deleteDiagnosisDocument = mutation({
 	args: { documentId: v.id("diagnosisDocuments") },
 	handler: async (ctx, args) => {
