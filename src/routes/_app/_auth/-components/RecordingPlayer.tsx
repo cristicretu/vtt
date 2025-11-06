@@ -1,4 +1,5 @@
 import * as SliderPrimitive from "@radix-ui/react-slider";
+import { Volume2, VolumeX } from "lucide-react";
 import { type ComponentProps, type CSSProperties, useEffect, useRef, useState } from "react";
 import {
 	AudioPlayerButton,
@@ -6,6 +7,7 @@ import {
 	useAudioPlayer,
 	useAudioPlayerTime,
 } from "@/components/ui/audio-player";
+import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 
 interface Recording {
@@ -21,6 +23,7 @@ interface RecordingPlayerProps {
 }
 
 const STORAGE_KEY = "vtt_current_recording";
+const VOLUME_STORAGE_KEY = "vtt_player_volume";
 
 // Format time in MM:SS format
 const formatTime = (seconds: number): string => {
@@ -83,6 +86,80 @@ const LinePlayerProgress = ({
 			</SliderPrimitive.Track>
 			<SliderPrimitive.Thumb className="hidden" />
 		</SliderPrimitive.Root>
+	);
+};
+
+// Volume Control Component
+const VolumeControl = () => {
+	const player = useAudioPlayer();
+	const [volume, setVolume] = useState(1);
+
+	// Load volume from localStorage on mount
+	useEffect(() => {
+		const stored = localStorage.getItem(VOLUME_STORAGE_KEY);
+		if (stored) {
+			try {
+				const savedVolume = Number.parseFloat(stored);
+				if (!Number.isNaN(savedVolume) && savedVolume >= 0 && savedVolume <= 1) {
+					setVolume(savedVolume);
+					if (player.ref.current) {
+						player.ref.current.volume = savedVolume;
+					}
+				}
+			} catch (error) {
+				console.error("Failed to load volume from storage:", error);
+			}
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []); // Only run once on mount
+
+	// Update audio element volume whenever it changes
+	useEffect(() => {
+		if (player.ref.current) {
+			player.ref.current.volume = volume;
+		}
+	}, [volume, player.ref]);
+
+	const handleVolumeChange = (values: number[]) => {
+		const newVolume = values[0];
+		setVolume(newVolume);
+		try {
+			localStorage.setItem(VOLUME_STORAGE_KEY, newVolume.toString());
+		} catch (error) {
+			console.error("Failed to save volume to storage:", error);
+		}
+	};
+
+	const toggleMute = () => {
+		const newVolume = volume === 0 ? 1 : 0;
+		setVolume(newVolume);
+		try {
+			localStorage.setItem(VOLUME_STORAGE_KEY, newVolume.toString());
+		} catch (error) {
+			console.error("Failed to save volume to storage:", error);
+		}
+	};
+
+	return (
+		<div className="flex items-center gap-2">
+			<button
+				type="button"
+				onClick={toggleMute}
+				className="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+				aria-label={volume === 0 ? "Unmute" : "Mute"}
+			>
+				{volume === 0 ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+			</button>
+			<Slider
+				value={[volume]}
+				onValueChange={handleVolumeChange}
+				min={0}
+				max={1}
+				step={0.01}
+				className="w-20"
+				aria-label="Volume"
+			/>
+		</div>
 	);
 };
 
@@ -239,6 +316,45 @@ function RecordingPlayerInternal({ className }: RecordingPlayerProps) {
 		}
 	}, [currentRecording]);
 
+	// Keyboard shortcuts: Arrow keys for seeking, Spacebar for play/pause
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			// Check if user is typing in an input field
+			const target = e.target as HTMLElement;
+			const isInputField =
+				target.tagName === "INPUT" ||
+				target.tagName === "TEXTAREA" ||
+				target.isContentEditable;
+
+			// Spacebar: play/pause (but not when typing in input fields)
+			if (e.key === " " && !isInputField) {
+				e.preventDefault();
+				if (player.isPlaying) {
+					player.pause();
+				} else {
+					player.play();
+				}
+				return;
+			}
+
+			// Arrow keys: skip forward/backward 5 seconds
+			if (e.key === "ArrowRight") {
+				e.preventDefault();
+				const newTime = Math.min((time || 0) + 5, player.duration ?? 0);
+				player.seek(newTime);
+			} else if (e.key === "ArrowLeft") {
+				e.preventDefault();
+				const newTime = Math.max((time || 0) - 5, 0);
+				player.seek(newTime);
+			}
+		};
+
+		window.addEventListener("keydown", handleKeyDown);
+		return () => {
+			window.removeEventListener("keydown", handleKeyDown);
+		};
+	}, [player, time]);
+
 	if (!activeItem || !currentRecording) {
 		return null;
 	}
@@ -289,6 +405,9 @@ function RecordingPlayerInternal({ className }: RecordingPlayerProps) {
 						{formatTime(time)} / {formatTime(player.duration ?? 0)}
 					</p>
 				</div>
+
+				{/* Volume Control */}
+				<VolumeControl />
 			</div>
 
 			{/* Progress Bar */}
