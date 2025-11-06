@@ -32,7 +32,7 @@ export const Route = createRootRouteWithContext<{
 					<title>{title}</title>
 				</Helmet>
 				<Suspense>
-					<TanStackRouterDevtools />
+					<TanStackRouterDevtools position="top-right" />
 				</Suspense>
 			</>
 		);

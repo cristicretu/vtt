@@ -1,9 +1,24 @@
-"use client";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
-import { ChevronsLeft, Home, Plus, Search, Volume2, X } from "lucide-react";
+import {
+	AudioLinesIcon,
+	ChevronsLeft,
+	CircleUserRoundIcon,
+	FileUpIcon,
+	Home,
+	Plus,
+	Search,
+	Volume2,
+	X,
+} from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
 	Sidebar,
@@ -118,7 +133,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
 	return (
 		<>
-			{shouldShowTrigger && <SidebarTrigger className="absolute top-0 left-0 z-50" />}
+			{shouldShowTrigger && <SidebarTrigger className="fixed top-0 left-0 z-50" />}
 			<Sidebar collapsible="offcanvas" className="group group/sidebar">
 				<SidebarHeader className="border-b">
 					<div className="flex items-center justify-between gap-2 px-2 py-1">
@@ -138,17 +153,33 @@ export function AppSidebar({ user }: AppSidebarProps) {
 							>
 								<ChevronsLeft />
 							</Button>
-							<Button
-								variant="ghost"
-								size="icon"
-								className="h-8 w-8"
-								asChild
-								title="Add new patient"
-							>
-								<Link to="/dashboard">
-									<Plus />
-								</Link>
-							</Button>
+							<DropdownMenu>
+								<DropdownMenuTrigger asChild>
+									<Button variant="ghost" size="icon" className="h-8 w-8" title="Add new">
+										<Plus className="h-4 w-4" />
+									</Button>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent side="bottom" align="start">
+									<DropdownMenuItem asChild>
+										<Link to="/dashboard" className="cursor-pointer">
+											<CircleUserRoundIcon className="h-4 w-4" />
+											<span>New patient</span>
+										</Link>
+									</DropdownMenuItem>
+									<DropdownMenuItem asChild>
+										<Link to="/dashboard" className="cursor-pointer">
+											<AudioLinesIcon className="h-4 w-4" />
+											<span>New recording</span>
+										</Link>
+									</DropdownMenuItem>
+									<DropdownMenuItem asChild>
+										<Link to="/dashboard" className="cursor-pointer">
+											<FileUpIcon className="h-4 w-4" />
+											<span>Upload file</span>
+										</Link>
+									</DropdownMenuItem>
+								</DropdownMenuContent>
+							</DropdownMenu>
 						</div>
 					</div>
 				</SidebarHeader>

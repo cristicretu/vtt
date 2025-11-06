@@ -1,13 +1,18 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api } from "~/convex/_generated/api";
 import siteConfig from "~/site.config";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon, User } from "lucide-react";
 
 export const Route = createFileRoute("/_app/_auth/_layout/dashboard/")({
 	component: Dashboard,
@@ -20,28 +25,26 @@ export const Route = createFileRoute("/_app/_auth/_layout/dashboard/")({
 
 export default function Dashboard() {
 	const createPatient = useMutation(api.patients.createPatient);
+	const navigate = useNavigate();
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [formData, setFormData] = useState({
 		name: "",
 		surname: "",
-		dateOfBirth: "",
 		email: "",
 		phone: "",
 		cnp: "",
 	});
+	const [dateOfBirth, setDateOfBirth] = useState<Date>();
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setIsSubmitting(true);
 
 		try {
-			// Convert date string to Unix timestamp
-			const dateOfBirth = new Date(formData.dateOfBirth).getTime();
-
-			await createPatient({
+			const patientId = await createPatient({
 				name: formData.name,
 				surname: formData.surname,
-				dateOfBirth,
+				dateOfBirth: dateOfBirth?.getTime(),
 				email: formData.email || undefined,
 				phone: formData.phone ? `+407${formData.phone}` : undefined,
 				cnp: formData.cnp,
@@ -53,11 +56,14 @@ export default function Dashboard() {
 			setFormData({
 				name: "",
 				surname: "",
-				dateOfBirth: "",
 				email: "",
 				phone: "",
 				cnp: "",
 			});
+			setDateOfBirth(undefined);
+
+			// Redirect to the new patient's page
+			navigate({ to: "/dashboard/$patientId", params: { patientId } });
 		} catch (error) {
 			toast.error(error instanceof Error ? error.message : "Failed to create patient");
 		} finally {
@@ -94,15 +100,34 @@ export default function Dashboard() {
 		});
 	};
 
+	const handleClear = () => {
+		setFormData({
+			name: "",
+			surname: "",
+			email: "",
+			phone: "",
+			cnp: "",
+		});
+		setDateOfBirth(undefined);
+	};
+
 	return (
 		<div className="flex h-full w-full flex-col">
-			{/* Main Content */}
-			<main className="flex-1 overflow-auto p-6">
-				<div className="mx-auto max-w-2xl">
-					<Card>
-						<CardHeader>
-							<CardTitle>Add New Patient</CardTitle>
-							<CardDescription>Enter patient information to create a new record</CardDescription>
+			<main className="flex-1 overflow-auto p-8 md:p-6">
+				<div className="mx-auto max-w-4xl">
+					<Card className="border-2 shadow-lg">
+						<CardHeader className="space-y-3 pb-6 md:pb-8">
+							<div className="flex items-center gap-3">
+								<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 md:h-12 md:w-12">
+									<User className="h-5 w-5 text-primary md:h-6 md:w-6" />
+								</div>
+								<div className="min-w-0">
+									<CardTitle className="font-bold text-xl md:text-3xl">Add New Patient</CardTitle>
+									<CardDescription className="mt-1 text-sm md:text-base">
+										Create a new patient record with their essential information
+									</CardDescription>
+								</div>
+							</div>
 						</CardHeader>
 						<CardContent>
 							<form onSubmit={handleSubmit} className="space-y-6">
@@ -154,14 +179,28 @@ export default function Dashboard() {
 
 								<div className="space-y-2">
 									<Label htmlFor="dateOfBirth">Date of Birth</Label>
-									<Input
-										id="dateOfBirth"
-										name="dateOfBirth"
-										type="date"
-										value={formData.dateOfBirth}
-										onChange={handleChange}
-										required
-									/>
+									<Popover>
+										<PopoverTrigger asChild>
+											<Button
+												variant={"outline"}
+												className={cn(
+													"w-full justify-start text-left font-normal",
+													!dateOfBirth && "text-muted-foreground",
+												)}
+											>
+												<CalendarIcon className="mr-2 h-4 w-4" />
+												{dateOfBirth ? format(dateOfBirth, "PPP") : <span>Pick a date</span>}
+											</Button>
+										</PopoverTrigger>
+										<PopoverContent className="w-auto p-0">
+											<Calendar
+												mode="single"
+												selected={dateOfBirth}
+												onSelect={setDateOfBirth}
+												initialFocus
+											/>
+										</PopoverContent>
+									</Popover>
 								</div>
 
 								<div className="space-y-2">
@@ -202,19 +241,10 @@ export default function Dashboard() {
 									<Button
 										type="button"
 										variant="outline"
-										onClick={() =>
-											setFormData({
-												name: "",
-												surname: "",
-												dateOfBirth: "",
-												email: "",
-												phone: "",
-												cnp: "",
-											})
-										}
+										onClick={handleClear}
 										disabled={isSubmitting}
 									>
-										Clear
+										Clear Form
 									</Button>
 								</div>
 							</form>

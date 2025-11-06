@@ -1,20 +1,11 @@
-"use client";
-
+import * as SliderPrimitive from "@radix-ui/react-slider";
+import { type ComponentProps, type CSSProperties, useEffect, useRef, useState } from "react";
 import {
-	ChevronLeft,
-	ChevronRight,
-	FileAudio,
-	Pause,
-	Play,
-	RotateCcw,
-	SkipBack,
-	SkipForward,
-	Volume2,
-	VolumeX,
-} from "lucide-react";
-import * as React from "react";
-import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
+	AudioPlayerButton,
+	AudioPlayerProvider,
+	useAudioPlayer,
+	useAudioPlayerTime,
+} from "@/components/ui/audio-player";
 import { cn } from "@/lib/utils";
 
 interface Recording {
@@ -30,46 +21,82 @@ interface RecordingPlayerProps {
 }
 
 const STORAGE_KEY = "vtt_current_recording";
-const STORAGE_VOLUME_KEY = "vtt_player_volume";
-const STORAGE_MUTED_KEY = "vtt_player_muted";
 
-export function RecordingPlayer({ className }: RecordingPlayerProps) {
-	const audioRef = React.useRef<HTMLAudioElement>(null);
-	const [currentRecording, setCurrentRecording] = React.useState<Recording | null>(null);
-	const [isPlaying, setIsPlaying] = React.useState(false);
-	const [currentTime, setCurrentTime] = React.useState(0);
-	const [duration, setDuration] = React.useState(0);
-	// Initialize volume from localStorage or default to 0.7
-	const [volume, setVolume] = React.useState(() => {
-		if (typeof window !== "undefined") {
-			const stored = localStorage.getItem(STORAGE_VOLUME_KEY);
-			if (stored) {
-				return Number.parseFloat(stored);
-			}
-		}
-		return 0.7;
-	});
-	// Initialize mute state from localStorage
-	const [isMuted, setIsMuted] = React.useState(() => {
-		if (typeof window !== "undefined") {
-			const stored = localStorage.getItem(STORAGE_MUTED_KEY);
-			return stored === "true";
-		}
+// Format time in MM:SS format
+const formatTime = (seconds: number): string => {
+	if (!Number.isFinite(seconds) || Number.isNaN(seconds)) return "0:00";
+	const mins = Math.floor(seconds / 60);
+	const secs = Math.floor(seconds % 60);
+	return `${mins}:${secs.toString().padStart(2, "0")}`;
+};
+
+// Validate audio URL
+const isValidAudioUrl = (url: string): boolean => {
+	if (!url || typeof url !== "string") return false;
+	try {
+		new URL(url);
+		return true;
+	} catch {
 		return false;
-	});
-	const [previousVolume, setPreviousVolume] = React.useState(() => {
-		if (typeof window !== "undefined") {
-			const stored = localStorage.getItem(STORAGE_VOLUME_KEY);
-			if (stored) {
-				return Number.parseFloat(stored);
+	}
+};
+
+const LinePlayerProgress = ({
+	className,
+	...otherProps
+}: Omit<ComponentProps<typeof SliderPrimitive.Root>, "min" | "max" | "value">) => {
+	const player = useAudioPlayer();
+	const time = useAudioPlayerTime();
+	const wasPlayingRef = useRef(false);
+
+	return (
+		<SliderPrimitive.Root
+			{...otherProps}
+			value={[time]}
+			onValueChange={(vals) => {
+				player.seek(vals[0]);
+				otherProps.onValueChange?.(vals);
+			}}
+			min={0}
+			max={player.duration ?? 0}
+			step={otherProps.step || 0.25}
+			onPointerDown={(e) => {
+				wasPlayingRef.current = player.isPlaying;
+				player.pause();
+				otherProps.onPointerDown?.(e);
+			}}
+			onPointerUp={(e) => {
+				if (wasPlayingRef.current) {
+					player.play();
+				}
+				otherProps.onPointerUp?.(e);
+			}}
+			className={cn("relative flex h-2 w-full touch-none select-none items-center", className)}
+			disabled={
+				player.duration === undefined ||
+				!Number.isFinite(player.duration) ||
+				Number.isNaN(player.duration)
 			}
-		}
-		return 0.7;
-	});
-	const [sidebarWidth, setSidebarWidth] = React.useState("16rem");
+		>
+			<SliderPrimitive.Track className="relative h-[2px] w-full grow overflow-hidden rounded-none bg-secondary/50">
+				<SliderPrimitive.Range className="absolute h-full bg-primary" />
+			</SliderPrimitive.Track>
+			<SliderPrimitive.Thumb className="hidden" />
+		</SliderPrimitive.Root>
+	);
+};
+
+function RecordingPlayerInternal({ className }: RecordingPlayerProps) {
+	const [sidebarWidth, setSidebarWidth] = useState("16rem");
+	const [error, setError] = useState<string | null>(null);
+	const player = useAudioPlayer<{ recording: Recording }>();
+	const time = useAudioPlayerTime();
+	const { activeItem } = player;
+	const currentRecording = activeItem?.data?.recording;
+	const hasInitialized = useRef(false);
 
 	// Listen to sidebar width changes
-	React.useEffect(() => {
+	useEffect(() => {
 		const handleSidebarWidthChange = (event: CustomEvent<{ width: string }>) => {
 			setSidebarWidth(event.detail.width);
 		};
@@ -86,491 +113,195 @@ export function RecordingPlayer({ className }: RecordingPlayerProps) {
 		};
 	}, []);
 
-	// Load recording from localStorage on mount
-	React.useEffect(() => {
-		const stored = localStorage.getItem(STORAGE_KEY);
-
-		if (stored) {
-			try {
-				const recording = JSON.parse(stored);
-				// Convert date string back to Date object
-				recording.createdAt = new Date(recording.createdAt);
-				setCurrentRecording(recording);
-			} catch (error) {
-				console.error("Failed to load recording from storage:", error);
-			}
-		}
-	}, []);
-
-	// Save recording to localStorage when it changes
-	React.useEffect(() => {
-		if (currentRecording) {
-			localStorage.setItem(STORAGE_KEY, JSON.stringify(currentRecording));
-		}
-	}, [currentRecording]);
-
-	// Save volume to localStorage when it changes
-	React.useEffect(() => {
-		localStorage.setItem(STORAGE_VOLUME_KEY, volume.toString());
-	}, [volume]);
-
-	// Save mute state to localStorage when it changes
-	React.useEffect(() => {
-		localStorage.setItem(STORAGE_MUTED_KEY, isMuted.toString());
-	}, [isMuted]);
-
-	// Set up audio element event listeners
-	React.useEffect(() => {
-		const audio = audioRef.current;
-		if (!audio) return;
-
-		// Set initial volume immediately
-		audio.volume = isMuted ? 0 : volume;
-
-		const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
-		const handleDurationChange = () => setDuration(audio.duration);
-		const handleEnded = () => setIsPlaying(false);
-		const handlePlay = () => setIsPlaying(true);
-		const handlePause = () => setIsPlaying(false);
-		const handleLoadedMetadata = () => {
-			setDuration(audio.duration);
-			setCurrentTime(0);
-			// Ensure volume is set when metadata loads
-			audio.volume = isMuted ? 0 : volume;
-		};
-
-		audio.addEventListener("timeupdate", handleTimeUpdate);
-		audio.addEventListener("durationchange", handleDurationChange);
-		audio.addEventListener("loadedmetadata", handleLoadedMetadata);
-		audio.addEventListener("ended", handleEnded);
-		audio.addEventListener("play", handlePlay);
-		audio.addEventListener("pause", handlePause);
-
-		return () => {
-			audio.removeEventListener("timeupdate", handleTimeUpdate);
-			audio.removeEventListener("durationchange", handleDurationChange);
-			audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
-			audio.removeEventListener("ended", handleEnded);
-			audio.removeEventListener("play", handlePlay);
-			audio.removeEventListener("pause", handlePause);
-		};
-	}, [currentRecording, volume, isMuted]);
-
-	// Update audio volume
-	React.useEffect(() => {
-		if (audioRef.current) {
-			audioRef.current.volume = isMuted ? 0 : volume;
-		}
-	}, [volume, isMuted]);
-
-	// Global function to load a new recording (can be called from other components)
-	React.useEffect(() => {
+	// Global function to load a new recording
+	useEffect(() => {
 		const loadRecording = (recording: Recording) => {
-			setCurrentRecording(recording);
-			setCurrentTime(0);
-			// Auto-play when a new recording is loaded
-			setTimeout(() => {
-				audioRef.current?.play();
-			}, 100);
+			// Reset error state
+			setError(null);
+
+			// Validate recording data
+			if (!recording || !recording.id || !recording.recording) {
+				const errorMsg = "Invalid recording data: missing required fields";
+				console.error(errorMsg, recording);
+				setError(errorMsg);
+				return;
+			}
+
+			// Validate audio URL
+			if (!isValidAudioUrl(recording.recording)) {
+				const errorMsg = `Invalid audio URL: ${recording.recording}`;
+				console.error(errorMsg);
+				setError(errorMsg);
+				return;
+			}
+
+			console.log("Loading recording:", {
+				id: recording.id,
+				name: recording.patientName,
+				url: recording.recording,
+			});
+
+			// Save to localStorage when loading
+			try {
+				localStorage.setItem(STORAGE_KEY, JSON.stringify(recording));
+			} catch (error) {
+				console.error("Failed to save recording to storage:", error);
+			}
+
+			// Set the active item and play
+			try {
+				player.play({
+					id: recording.id,
+					src: recording.recording,
+					data: { recording },
+				});
+			} catch (error) {
+				const errorMsg = `Failed to play recording: ${error instanceof Error ? error.message : String(error)}`;
+				console.error(errorMsg);
+				setError(errorMsg);
+			}
 		};
 
-		// Expose function globally
 		(window as Window & { loadRecording?: (recording: Recording) => void }).loadRecording =
 			loadRecording;
 
 		return () => {
 			delete (window as Window & { loadRecording?: (recording: Recording) => void }).loadRecording;
 		};
-	}, []);
+	}, [player]);
 
-	// Expose togglePlayPause globally
-	React.useEffect(() => {
-		(window as any).togglePlayPause = togglePlayPause;
-		return () => {
-			delete (window as any).togglePlayPause;
-		};
-	}, [isPlaying, currentRecording]);
+	// Load recording from localStorage on mount (only once)
+	useEffect(() => {
+		if (hasInitialized.current) return;
+		hasInitialized.current = true;
 
-	// Broadcast playing state changes
-	React.useEffect(() => {
-		window.dispatchEvent(new CustomEvent("playingStateChanged", { detail: { isPlaying } }));
-	}, [isPlaying]);
-
-	const togglePlayPause = () => {
-		if (!audioRef.current || !currentRecording) return;
-
-		if (isPlaying) {
-			audioRef.current.pause();
-		} else {
-			audioRef.current.play();
-		}
-	};
-
-	const handleReset = () => {
-		if (!audioRef.current) return;
-		audioRef.current.currentTime = 0;
-		setCurrentTime(0);
-	};
-
-	const handleSeek = (value: number[]) => {
-		if (!audioRef.current) return;
-		const newTime = value[0];
-		audioRef.current.currentTime = newTime;
-		setCurrentTime(newTime);
-	};
-
-	const handleVolumeChange = (value: number[]) => {
-		const newVolume = value[0];
-		setVolume(newVolume);
-		if (newVolume > 0 && isMuted) {
-			setIsMuted(false);
-		}
-	};
-
-	const toggleMute = () => {
-		if (isMuted) {
-			setIsMuted(false);
-			setVolume(previousVolume);
-		} else {
-			setPreviousVolume(volume);
-			setIsMuted(true);
-		}
-	};
-
-	const skip10Forward = () => {
-		if (!audioRef.current) return;
-		audioRef.current.currentTime = Math.min(audioRef.current.currentTime + 10, duration);
-	};
-
-	const skip10Backward = () => {
-		if (!audioRef.current) return;
-		audioRef.current.currentTime = Math.max(audioRef.current.currentTime - 10, 0);
-	};
-
-	const nextRecording = () => {
-		const win = window as any;
-		if (win.nextRecording) {
-			win.nextRecording();
-		}
-	};
-
-	const previousRecording = () => {
-		const win = window as any;
-		if (win.previousRecording) {
-			win.previousRecording();
-		}
-	};
-
-	// Keyboard shortcuts
-	React.useEffect(() => {
-		const handleKeyDown = (e: KeyboardEvent) => {
-			const target = e.target as HTMLElement;
-
-			// Skip if user is interacting with form elements or editable content
-			if (
-				target instanceof HTMLInputElement ||
-				target instanceof HTMLTextAreaElement ||
-				target instanceof HTMLSelectElement ||
-				target instanceof HTMLButtonElement ||
-				target.isContentEditable ||
-				target.closest("button") || // Check if target is inside a button
-				target.closest("select") // Check if target is inside a select
-			) {
-				return;
-			}
-
-			switch (e.key) {
-				case "ArrowLeft":
-					e.preventDefault();
-					skip10Backward();
-					break;
-				case "ArrowRight":
-					e.preventDefault();
-					skip10Forward();
-					break;
-				case " ":
-					e.preventDefault();
-					togglePlayPause();
-					break;
-			}
+		// TODO: Remove hardcoded test audio after testing
+		const testRecording: Recording = {
+			id: "test-recording",
+			patientId: "test-patient",
+			patientName: "Test Audio Recording",
+			recording: "https://storage.googleapis.com/eleven-public-cdn/audio/ui-elevenlabs-io/00.mp3",
+			createdAt: new Date(),
 		};
 
-		window.addEventListener("keydown", handleKeyDown);
-		return () => window.removeEventListener("keydown", handleKeyDown);
-	}, [duration, isPlaying, currentRecording]);
+		const stored = localStorage.getItem(STORAGE_KEY);
+		if (stored) {
+			try {
+				const recording = JSON.parse(stored);
+				recording.createdAt = new Date(recording.createdAt);
 
-	const formatTime = (time: number) => {
-		if (Number.isNaN(time)) return "0:00";
-		const minutes = Math.floor(time / 60);
-		const seconds = Math.floor(time % 60);
-		return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-	};
+				// Validate the stored recording
+				if (!isValidAudioUrl(recording.recording)) {
+					console.warn("Stored recording has invalid URL, using test audio");
+					player.setActiveItem({
+						id: testRecording.id,
+						src: testRecording.recording,
+						data: { recording: testRecording },
+					});
+					return;
+				}
+
+				console.log("Loading recording from storage:", recording);
+				player.setActiveItem({
+					id: recording.id,
+					src: recording.recording,
+					data: { recording },
+				});
+			} catch (error) {
+				console.error("Failed to load recording from storage:", error);
+				// Fallback to test audio on error
+				player.setActiveItem({
+					id: testRecording.id,
+					src: testRecording.recording,
+					data: { recording: testRecording },
+				});
+			}
+		} else {
+			// Load test audio only if nothing in localStorage
+			console.log("No stored recording, loading test audio");
+			player.setActiveItem({
+				id: testRecording.id,
+				src: testRecording.recording,
+				data: { recording: testRecording },
+			});
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []); // Only run once on mount
+
+	// Save current recording to localStorage whenever it changes
+	useEffect(() => {
+		if (currentRecording && hasInitialized.current) {
+			try {
+				localStorage.setItem(STORAGE_KEY, JSON.stringify(currentRecording));
+			} catch (error) {
+				console.error("Failed to save recording to storage:", error);
+			}
+		}
+	}, [currentRecording]);
+
+	if (!activeItem || !currentRecording) {
+		return null;
+	}
 
 	return (
 		<div
 			className={cn(
 				"fixed bottom-0 z-50 border-t bg-background/95 backdrop-blur transition-all duration-200 ease-out supports-[backdrop-filter]:bg-background/60",
-				// On mobile, full width from left
 				"left-0 w-full",
-				// On desktop, offset by sidebar width
 				"md:left-[var(--sidebar-offset)] md:w-[calc(100vw-var(--sidebar-offset))]",
 				className,
 			)}
 			style={
 				{
 					"--sidebar-offset": sidebarWidth,
-				} as React.CSSProperties
+				} as CSSProperties
 			}
 		>
-			{currentRecording && (
-				<audio ref={audioRef} src={currentRecording.recording} preload="metadata" />
+			{/* Error Banner */}
+			{error && (
+				<div className="bg-destructive/10 px-4 py-2 text-destructive text-sm">
+					<span className="font-medium">Error:</span> {error}
+				</div>
 			)}
 
-			<div className="mx-auto max-w-screen-2xl px-4 py-3">
-				{/* Mobile Layout */}
-				<div className="flex flex-col gap-3 md:hidden">
-					{/* Recording Info */}
-					<div className="flex min-w-0 items-center gap-3">
-						<div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded bg-gradient-to-br from-lime-400 via-cyan-300 to-blue-500">
-							<FileAudio className="h-6 w-6 text-white" />
-						</div>
-						<div className="min-w-0 flex-1">
-							<p className="truncate font-medium text-sm">
-								{currentRecording?.patientName || "No recording selected"}
-							</p>
-							<p className="truncate text-muted-foreground text-xs">
-								{currentRecording?.createdAt.toLocaleDateString() || "Select a recording to play"}
-							</p>
-						</div>
-					</div>
+			<div className="mx-auto flex max-w-screen-2xl items-center gap-4 px-4 py-3">
+				{/* Play/Pause Button */}
+				<AudioPlayerButton
+					item={{
+						id: currentRecording.id,
+						src: currentRecording.recording,
+						data: { recording: currentRecording },
+					}}
+					variant="ghost"
+					size="icon"
+					className="h-9 w-9 flex-shrink-0"
+				/>
 
-					{/* Progress Bar */}
-					<div className="flex items-center gap-2">
-						<span className="text-muted-foreground text-xs tabular-nums">
-							{formatTime(currentTime)}
-						</span>
-						<Slider
-							value={[currentTime]}
-							min={0}
-							max={duration || 100}
-							step={0.1}
-							onValueChange={handleSeek}
-							className="flex-1"
-							disabled={!currentRecording}
-						/>
-						<span className="text-muted-foreground text-xs tabular-nums">
-							{formatTime(duration)}
-						</span>
+				{/* Patient Name and Time Display */}
+				<div className="min-w-0 flex-1">
+					<div className="flex flex-row items-center justify-start gap-2">
+						<p className="truncate font-medium text-sm">{currentRecording.patientName}</p>
+						<p className="truncate font-light text-muted-foreground text-xs">
+							{currentRecording.createdAt.toDateString()}
+						</p>
 					</div>
-
-					{/* Controls */}
-					<div className="flex items-center justify-center gap-2">
-						<Button
-							variant="ghost"
-							size="icon"
-							className="h-8 w-8"
-							onClick={handleReset}
-							disabled={!currentRecording}
-							title="Reset"
-						>
-							<RotateCcw className="h-4 w-4" />
-						</Button>
-						<Button
-							variant="ghost"
-							size="icon"
-							className="h-8 w-8"
-							onClick={skip10Backward}
-							disabled={!currentRecording}
-							title="Back 10s (←)"
-						>
-							<ChevronLeft className="h-4 w-4" />
-						</Button>
-						<Button
-							variant="ghost"
-							size="icon"
-							className="h-8 w-8"
-							onClick={previousRecording}
-							disabled={!currentRecording}
-							title="Previous recording"
-						>
-							<SkipBack className="h-4 w-4" />
-						</Button>
-						<Button
-							variant="default"
-							size="icon"
-							className="h-10 w-10"
-							onClick={togglePlayPause}
-							disabled={!currentRecording}
-							title="Play/Pause (Space)"
-						>
-							{isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-						</Button>
-						<Button
-							variant="ghost"
-							size="icon"
-							className="h-8 w-8"
-							onClick={nextRecording}
-							disabled={!currentRecording}
-							title="Next recording"
-						>
-							<SkipForward className="h-4 w-4" />
-						</Button>
-						<Button
-							variant="ghost"
-							size="icon"
-							className="h-8 w-8"
-							onClick={skip10Forward}
-							disabled={!currentRecording}
-							title="Forward 10s (→)"
-						>
-							<ChevronRight className="h-4 w-4" />
-						</Button>
-						<Button
-							variant="ghost"
-							size="icon"
-							className="h-8 w-8"
-							onClick={toggleMute}
-							disabled={!currentRecording}
-							title="Mute"
-						>
-							{isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-						</Button>
-					</div>
-				</div>
-
-				{/* Desktop Layout */}
-				<div className="hidden items-center gap-6 md:flex">
-					{/* Left: Recording Info */}
-					<div className="flex w-[300px] items-center gap-3">
-						<div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded bg-gradient-to-br from-lime-400 via-cyan-300 to-blue-500">
-							<FileAudio className="h-6 w-6 text-white" />
-						</div>
-						<div className="min-w-0">
-							<p className="truncate font-medium text-sm">
-								{currentRecording?.patientName || "No recording selected"}
-							</p>
-							<p className="truncate text-muted-foreground text-xs">
-								{currentRecording
-									? currentRecording.createdAt.toLocaleDateString("en-US", {
-											month: "short",
-											day: "numeric",
-											year: "numeric",
-										})
-									: "Select a recording to play"}
-							</p>
-						</div>
-					</div>
-
-					{/* Center: Controls and Progress */}
-					<div className="flex flex-1 flex-col gap-2">
-						{/* Playback Controls */}
-						<div className="flex items-center justify-center gap-2">
-							<Button
-								variant="ghost"
-								size="icon"
-								className="h-8 w-8"
-								onClick={handleReset}
-								disabled={!currentRecording}
-								title="Reset"
-							>
-								<RotateCcw className="h-4 w-4" />
-							</Button>
-							<Button
-								variant="ghost"
-								size="icon"
-								className="h-8 w-8"
-								onClick={skip10Backward}
-								disabled={!currentRecording}
-								title="Back 10s (←)"
-							>
-								<ChevronLeft className="h-4 w-4" />
-							</Button>
-							<Button
-								variant="ghost"
-								size="icon"
-								className="h-8 w-8"
-								onClick={previousRecording}
-								disabled={!currentRecording}
-								title="Previous recording"
-							>
-								<SkipBack className="h-4 w-4" />
-							</Button>
-							<Button
-								variant="default"
-								size="icon"
-								className="h-10 w-10"
-								onClick={togglePlayPause}
-								disabled={!currentRecording}
-								title="Play/Pause (Space)"
-							>
-								{isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-							</Button>
-							<Button
-								variant="ghost"
-								size="icon"
-								className="h-8 w-8"
-								onClick={nextRecording}
-								disabled={!currentRecording}
-								title="Next recording"
-							>
-								<SkipForward className="h-4 w-4" />
-							</Button>
-							<Button
-								variant="ghost"
-								size="icon"
-								className="h-8 w-8"
-								onClick={skip10Forward}
-								disabled={!currentRecording}
-								title="Forward 10s (→)"
-							>
-								<ChevronRight className="h-4 w-4" />
-							</Button>
-						</div>
-
-						{/* Progress Bar */}
-						<div className="flex items-center gap-3">
-							<span className="text-muted-foreground text-xs tabular-nums">
-								{formatTime(currentTime)}
-							</span>
-							<Slider
-								value={[currentTime]}
-								min={0}
-								max={duration || 100}
-								step={0.1}
-								onValueChange={handleSeek}
-								className="flex-1"
-								disabled={!currentRecording}
-							/>
-							<span className="text-muted-foreground text-xs tabular-nums">
-								{formatTime(duration)}
-							</span>
-						</div>
-					</div>
-
-					{/* Right: Volume Control */}
-					<div className="flex w-[180px] items-center gap-2">
-						<Button
-							variant="ghost"
-							size="icon"
-							className="h-8 w-8"
-							onClick={toggleMute}
-							disabled={!currentRecording}
-						>
-							{isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-						</Button>
-						<Slider
-							value={[isMuted ? 0 : volume]}
-							min={0}
-							max={1}
-							step={0.01}
-							onValueChange={handleVolumeChange}
-							className="flex-1"
-							disabled={!currentRecording}
-						/>
-					</div>
+					<p className="text-xs text-muted-foreground">
+						{formatTime(time)} / {formatTime(player.duration ?? 0)}
+					</p>
 				</div>
 			</div>
+
+			{/* Progress Bar */}
+			<LinePlayerProgress className="absolute bottom-0 w-full" />
 		</div>
+	);
+}
+
+export function RecordingPlayer({ className }: RecordingPlayerProps) {
+	return (
+		<AudioPlayerProvider>
+			<RecordingPlayerInternal className={className} />
+		</AudioPlayerProvider>
 	);
 }
 
@@ -582,6 +313,10 @@ export function loadRecording(recording: Recording) {
 		};
 		if (win.loadRecording) {
 			win.loadRecording(recording);
+		} else {
+			console.error(
+				"Recording player not initialized. Make sure RecordingPlayer component is mounted.",
+			);
 		}
 	}
 }
