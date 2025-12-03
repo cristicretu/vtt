@@ -1,57 +1,56 @@
-import { action, internalMutation, internalQuery, query } from "./_generated/server";
+import { action, internalMutation, internalQuery, query, mutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
-import { OPENAI_API_KEY } from "./env";
+// import { OPENAI_API_KEY } from "./env";
 
 /**
  * Transcribes audio using OpenAI Whisper API
  */
-async function transcribeAudioWithWhisper(audioUrl: string): Promise<string> {
-	if (!OPENAI_API_KEY) {
-		throw new Error("OPENAI_API_KEY environment variable is not set");
-	}
-
-	// Download the audio file from Convex storage
-	const audioResponse = await fetch(audioUrl);
-
-	if (!audioResponse.ok) {
-		throw new Error(`Failed to download audio file: ${audioResponse.statusText}`);
-	}
-
-	const audioBlob = await audioResponse.blob();
-
-	// Prepare the form data for OpenAI API
-	const formData = new FormData();
-	formData.append("file", audioBlob, "audio.webm");
-	formData.append("model", "whisper-1");
-	formData.append("language", "ro"); // Romanian language for better accuracy
-
-	// Call OpenAI Whisper API
-	const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
-		method: "POST",
-		headers: {
-			Authorization: `Bearer ${OPENAI_API_KEY}`,
-		},
-		body: formData,
-	});
-
-	if (!response.ok) {
-		const errorData = await response.json().catch(() => ({}));
-		throw new Error(
-			`OpenAI API error: ${response.status} ${response.statusText}. ${
-				errorData.error?.message || ""
-			}`,
-		);
-	}
-
-	const result = await response.json();
-
-	if (!result.text) {
-		throw new Error("No transcription text received from OpenAI API");
-	}
-
-	return result.text;
-}
+// async function transcribeAudioWithWhisper(audioUrl: string): Promise<string> {
+// 	if (!OPENAI_API_KEY) {
+// 		throw new Error("OPENAI_API_KEY environment variable is not set");
+// 	}
+//
+// 	// Download the audio file from Convex storage
+// 	const audioResponse = await fetch(audioUrl);
+//
+// 	if (!audioResponse.ok) {
+// 		throw new Error(`Failed to download audio file: ${audioResponse.statusText}`);
+// 	}
+//
+// 	const audioBlob = await audioResponse.blob();
+//
+// 	// Prepare the form data for OpenAI API
+// 	const formData = new FormData();
+// 	formData.append("file", audioBlob, "audio.webm");
+// 	formData.append("model", "whisper-1");
+// 	formData.append("language", "ro"); // Romanian language for better accuracy
+//
+// 	// Call OpenAI Whisper API
+// 	const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+// 		method: "POST",
+// 		headers: {
+// 			Authorization: `Bearer ${OPENAI_API_KEY}`,
+// 		},
+// 		body: formData,
+// 	});
+//
+// 	if (!response.ok) {
+// 		const errorData = await response.json().catch(() => ({}));
+// 		throw new Error(
+// 			`OpenAI API error: ${response.status} ${response.statusText}. ${errorData.error?.message || ""
+// 			}`,
+// 		);
+// 	}
+//
+// 	const result = await response.json();
+//
+// 	if (!result.text) {
+// 		throw new Error("No transcription text received from OpenAI API");
+// 	}
+//
+// 	return result.text;
+// }
 
 export const generateTranscript = action({
 	args: {
@@ -83,15 +82,16 @@ export const generateTranscript = action({
 			}
 
 			// Transcribe audio using OpenAI Whisper API
-			const transcript = await transcribeAudioWithWhisper(audioUrl);
+			// const transcript = await transcribeAudioWithWhisper(audioUrl);
 
-			await ctx.runMutation(internal.transcript.updateTranscript, {
-				documentId: args.documentId,
-				transcript,
-				status: "completed",
-			});
+			// await ctx.runMutation(internal.transcript.updateTranscript, {
+			// 	documentId: args.documentId,
+			// 	transcript,
+			// 	status: "completed",
+			// });
 
-			return { success: true, transcript };
+			// return { success: true, transcript };
+			throw new Error("OpenAI transcription is disabled. Use local transcription.");
 		} catch (error) {
 			// Update status to "failed" on error
 			await ctx.runMutation(internal.transcript.updateTranscriptStatus, {
@@ -166,5 +166,19 @@ export const getTranscriptStatus = query({
 			transcript: document.transcript,
 			dateLastModified: document.dateLastModified,
 		};
+	},
+});
+
+export const saveTranscript = mutation({
+	args: {
+		documentId: v.id("diagnosisDocuments"),
+		transcript: v.string(),
+	},
+	handler: async (ctx, args) => {
+		await ctx.db.patch(args.documentId, {
+			transcript: args.transcript,
+			transcriptStatus: "completed",
+			dateLastModified: Date.now(),
+		});
 	},
 });
