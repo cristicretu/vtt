@@ -64,6 +64,7 @@ function PatientPage() {
 	const deletePatient = useMutation(api.patients.deletePatient);
 	const deleteDiagnosisDocument = useMutation(api.diagnosisDocuments.deleteDiagnosisDocument);
 	const generateTranscript = useAction(api.transcript.generateTranscript);
+	const saveTranscript = useMutation(api.transcript.saveTranscript);
 	const generateStructuredOutput = useAction(api.structuredOutput.generateStructuredOutput);
 
 	// Compute full name early for use in effects
@@ -209,12 +210,47 @@ function PatientPage() {
 		}
 	};
 
-	const handleStartTranscription = async (documentId: string) => {
+	const handleStartTranscription = async (documentId: string, fileUrl: string) => {
 		try {
-			toast.loading("Starting transcription...");
-			await generateTranscript({ documentId: documentId as Id<"diagnosisDocuments"> });
+			toast.loading("Starting local transcription...");
+
+			if (!fileUrl) {
+				throw new Error("No audio file URL found");
+			}
+
+			// 1. Fetch the audio file
+			const response = await fetch(fileUrl);
+			const blob = await response.blob();
+
+			// 2. Send to local Python server
+			const formData = new FormData();
+			// Use a generic filename, the server handles it
+			formData.append("file", blob, "recording.webm");
+
+			const serverResponse = await fetch("http://localhost:8000/transcribe", {
+				method: "POST",
+				body: formData,
+			});
+
+			if (!serverResponse.ok) {
+				const errorData = await serverResponse.json().catch(() => ({}));
+				throw new Error(errorData.error || "Local server error");
+			}
+
+			const data = await serverResponse.json();
+
+			if (!data.text) {
+				throw new Error("No text received from local server");
+			}
+
+			// 3. Save the transcript to Convex
+			await saveTranscript({
+				documentId: documentId as Id<"diagnosisDocuments">,
+				transcript: data.text,
+			});
+
 			toast.dismiss();
-			toast.success("Transcription started successfully");
+			toast.success("Transcription completed locally");
 		} catch (error) {
 			toast.dismiss();
 			toast.error(error instanceof Error ? error.message : "Failed to start transcription");
@@ -413,9 +449,8 @@ function PatientPage() {
 										return (
 											<Collapsible key={doc._id} open={isExpanded} onOpenChange={toggleExpanded}>
 												<Card
-													className={`overflow-hidden transition-all ${
-														isCurrentRecording ? "ring-2 ring-primary shadow-lg" : ""
-													}`}
+													className={`overflow-hidden transition-all ${isCurrentRecording ? "ring-2 ring-primary shadow-lg" : ""
+														}`}
 												>
 													<CardContent className="p-3">
 														<div className="flex items-center gap-3 justify-between">
@@ -528,17 +563,17 @@ function PatientPage() {
 																{/* Transcribe Button - Show if transcript is pending or failed */}
 																{(doc.transcriptStatus === "pending" ||
 																	doc.transcriptStatus === "failed") && (
-																	<Button
-																		variant="outline"
-																		size="sm"
-																		className="h-8 shrink-0 text-xs"
-																		onClick={() => handleStartTranscription(doc._id)}
-																		title="Start transcription"
-																	>
-																		<FileText className="h-3 w-3 mr-1" />
-																		Transcribe
-																	</Button>
-																)}
+																		<Button
+																			variant="outline"
+																			size="sm"
+																			className="h-8 shrink-0 text-xs"
+																			onClick={() => handleStartTranscription(doc._id, doc.fileUrl || "")}
+																			title="Start local transcription"
+																		>
+																			<FileText className="h-3 w-3 mr-1" />
+																			Transcribe Local
+																		</Button>
+																	)}
 
 																{/* Analyze Button - Show if transcript is completed */}
 																{doc.transcriptStatus === "completed" && (
@@ -596,9 +631,8 @@ function PatientPage() {
 																		>
 																			{isExpanded ? "Hide" : "Show"} Details
 																			<ChevronDown
-																				className={`h-3 w-3 transition-transform ${
-																					isExpanded ? "rotate-180" : ""
-																				}`}
+																				className={`h-3 w-3 transition-transform ${isExpanded ? "rotate-180" : ""
+																					}`}
 																			/>
 																		</Button>
 																	</CollapsibleTrigger>
@@ -702,7 +736,7 @@ function PatientPage() {
 																			{/* Recommendations */}
 																			{doc.structuredOutput.recommendations?.lifestyle &&
 																				doc.structuredOutput.recommendations.lifestyle.length >
-																					0 && (
+																				0 && (
 																					<div>
 																						<h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1">
 																							Recomandări
