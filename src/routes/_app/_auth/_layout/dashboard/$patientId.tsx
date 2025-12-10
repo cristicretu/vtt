@@ -13,6 +13,7 @@ import {
 	FileText,
 	Sparkles,
 	ChevronDown,
+	FileEdit,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -557,6 +558,24 @@ function PatientPage() {
 																		{doc.structuredOutputStatus === "completed"
 																			? "Re-analyze"
 																			: "Analyze"}
+																	</Button>
+																)}
+
+																{/* Edit Document Button - Only show when structuredOutputStatus is completed */}
+																{doc.structuredOutputStatus === "completed" && (
+																	<Button
+																		variant="outline"
+																		size="icon"
+																		className="h-8 w-8 shrink-0"
+																		onClick={() =>
+																			navigate({
+																				to: "/dashboard/$patientId/document/$documentId",
+																				params: { patientId, documentId: doc._id },
+																			})
+																		}
+																		title="Edit Document"
+																	>
+																		<FileEdit className="h-4 w-4" />
 																	</Button>
 																)}
 

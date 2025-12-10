@@ -23,6 +23,7 @@ import { Route as AppAuthLayoutSettingsImport } from './routes/_app/_auth/_layou
 import { Route as AppAuthLayoutDashboardImport } from './routes/_app/_auth/_layout/dashboard'
 import { Route as AppAuthLayoutDashboardIndexImport } from './routes/_app/_auth/_layout/dashboard/index'
 import { Route as AppAuthLayoutDashboardPatientIdImport } from './routes/_app/_auth/_layout/dashboard/$patientId'
+import { Route as AppAuthLayoutDashboardPatientIdDocumentDocumentIdImport } from './routes/_app/_auth/_layout/dashboard/$patientId_.document.$documentId'
 
 // Create Virtual Routes
 
@@ -84,6 +85,12 @@ const AppAuthLayoutDashboardIndexRoute =
 const AppAuthLayoutDashboardPatientIdRoute =
   AppAuthLayoutDashboardPatientIdImport.update({
     path: '/$patientId',
+    getParentRoute: () => AppAuthLayoutDashboardRoute,
+  } as any)
+
+const AppAuthLayoutDashboardPatientIdDocumentDocumentIdRoute =
+  AppAuthLayoutDashboardPatientIdDocumentDocumentIdImport.update({
+    path: '/$patientId/document/$documentId',
     getParentRoute: () => AppAuthLayoutDashboardRoute,
   } as any)
 
@@ -168,6 +175,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAuthLayoutDashboardIndexImport
       parentRoute: typeof AppAuthLayoutDashboardImport
     }
+    '/_app/_auth/_layout/dashboard/$patientId/document/$documentId': {
+      id: '/_app/_auth/_layout/dashboard/$patientId/document/$documentId'
+      path: '/$patientId/document/$documentId'
+      fullPath: '/dashboard/$patientId/document/$documentId'
+      preLoaderRoute: typeof AppAuthLayoutDashboardPatientIdDocumentDocumentIdImport
+      parentRoute: typeof AppAuthLayoutDashboardImport
+    }
   }
 }
 
@@ -181,6 +195,7 @@ export const routeTree = rootRoute.addChildren({
         AppAuthLayoutDashboardRoute: AppAuthLayoutDashboardRoute.addChildren({
           AppAuthLayoutDashboardPatientIdRoute,
           AppAuthLayoutDashboardIndexRoute,
+          AppAuthLayoutDashboardPatientIdDocumentDocumentIdRoute,
         }),
         AppAuthLayoutSettingsRoute,
       }),
@@ -249,7 +264,8 @@ export const routeTree = rootRoute.addChildren({
       "parent": "/_app/_auth/_layout",
       "children": [
         "/_app/_auth/_layout/dashboard/$patientId",
-        "/_app/_auth/_layout/dashboard/"
+        "/_app/_auth/_layout/dashboard/",
+        "/_app/_auth/_layout/dashboard/$patientId/document/$documentId"
       ]
     },
     "/_app/_auth/_layout/settings": {
@@ -266,6 +282,10 @@ export const routeTree = rootRoute.addChildren({
     },
     "/_app/_auth/_layout/dashboard/": {
       "filePath": "_app/_auth/_layout/dashboard/index.tsx",
+      "parent": "/_app/_auth/_layout/dashboard"
+    },
+    "/_app/_auth/_layout/dashboard/$patientId/document/$documentId": {
+      "filePath": "_app/_auth/_layout/dashboard/$patientId_.document.$documentId.tsx",
       "parent": "/_app/_auth/_layout/dashboard"
     }
   }
