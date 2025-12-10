@@ -146,3 +146,31 @@ export const deleteDiagnosisDocument = mutation({
 		await ctx.db.delete(args.documentId);
 	},
 });
+
+export const updateEditedContent = mutation({
+	args: {
+		documentId: v.id("diagnosisDocuments"),
+		editedContent: v.any(),
+	},
+	handler: async (ctx, args) => {
+		const userId = await auth.getUserId(ctx);
+		if (!userId) {
+			throw new Error("You must be logged in.");
+		}
+
+		const document = await ctx.db.get(args.documentId);
+		if (!document) {
+			throw new Error("Document not found.");
+		}
+
+		// Verify the document belongs to this doctor
+		if (document.doctorId !== userId) {
+			throw new Error("You don't have permission to edit this document.");
+		}
+
+		await ctx.db.patch(args.documentId, {
+			editedContent: args.editedContent,
+			dateLastModified: Date.now(),
+		});
+	},
+});

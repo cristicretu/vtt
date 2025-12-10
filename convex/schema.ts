@@ -119,6 +119,7 @@ const schema = defineSchema({
 				v.literal("failed"),
 			),
 		),
+		editedContent: v.optional(v.any()), // TipTap JSON document for edited content
 		audioMetadata: v.optional(
 			v.object({
 				duration: v.optional(v.number()), // Duration in seconds
