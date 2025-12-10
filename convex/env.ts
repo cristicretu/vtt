@@ -11,3 +11,6 @@ export const AUTH_GOOGLE_SECRET = process.env.AUTH_GOOGLE_SECRET;
 
 // OpenAI
 export const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
+// Groq
+export const GROQ_API_KEY = process.env.GROQ_API_KEY;

@@ -1,14 +1,15 @@
 import { action, internalMutation, internalQuery, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
-import { OPENAI_API_KEY } from "./env";
+import { GROQ_API_KEY } from "./env";
 
 /**
- * Transcribes audio using OpenAI Whisper API
+ * Transcribes audio using Groq Whisper API (whisper-large-v3)
+ * Using Groq for testing since it's free
  */
-async function transcribeAudioWithWhisper(audioUrl: string): Promise<string> {
-	if (!OPENAI_API_KEY) {
-		throw new Error("OPENAI_API_KEY environment variable is not set");
+async function transcribeAudioWithGroq(audioUrl: string): Promise<string> {
+	if (!GROQ_API_KEY) {
+		throw new Error("GROQ_API_KEY environment variable is not set");
 	}
 
 	// Download the audio file from Convex storage
@@ -20,17 +21,17 @@ async function transcribeAudioWithWhisper(audioUrl: string): Promise<string> {
 
 	const audioBlob = await audioResponse.blob();
 
-	// Prepare the form data for OpenAI API
+	// Prepare the form data for Groq API
 	const formData = new FormData();
 	formData.append("file", audioBlob, "audio.webm");
-	formData.append("model", "whisper-1");
+	formData.append("model", "whisper-large-v3");
 	formData.append("language", "ro"); // Romanian language for better accuracy
 
-	// Call OpenAI Whisper API
-	const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+	// Call Groq Whisper API
+	const response = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
 		method: "POST",
 		headers: {
-			Authorization: `Bearer ${OPENAI_API_KEY}`,
+			Authorization: `Bearer ${GROQ_API_KEY}`,
 		},
 		body: formData,
 	});
@@ -38,7 +39,7 @@ async function transcribeAudioWithWhisper(audioUrl: string): Promise<string> {
 	if (!response.ok) {
 		const errorData = await response.json().catch(() => ({}));
 		throw new Error(
-			`OpenAI API error: ${response.status} ${response.statusText}. ${
+			`Groq API error: ${response.status} ${response.statusText}. ${
 				errorData.error?.message || ""
 			}`,
 		);
@@ -47,11 +48,62 @@ async function transcribeAudioWithWhisper(audioUrl: string): Promise<string> {
 	const result = await response.json();
 
 	if (!result.text) {
-		throw new Error("No transcription text received from OpenAI API");
+		throw new Error("No transcription text received from Groq API");
 	}
 
 	return result.text;
 }
+
+/**
+ * Transcribes audio using OpenAI Whisper API
+ * NOTE: Currently commented out - using Groq for testing since it's free
+ */
+// async function transcribeAudioWithWhisper(audioUrl: string): Promise<string> {
+// 	if (!OPENAI_API_KEY) {
+// 		throw new Error("OPENAI_API_KEY environment variable is not set");
+// 	}
+
+// 	// Download the audio file from Convex storage
+// 	const audioResponse = await fetch(audioUrl);
+
+// 	if (!audioResponse.ok) {
+// 		throw new Error(`Failed to download audio file: ${audioResponse.statusText}`);
+// 	}
+
+// 	const audioBlob = await audioResponse.blob();
+
+// 	// Prepare the form data for OpenAI API
+// 	const formData = new FormData();
+// 	formData.append("file", audioBlob, "audio.webm");
+// 	formData.append("model", "whisper-1");
+// 	formData.append("language", "ro"); // Romanian language for better accuracy
+
+// 	// Call OpenAI Whisper API
+// 	const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+// 		method: "POST",
+// 		headers: {
+// 			Authorization: `Bearer ${OPENAI_API_KEY}`,
+// 		},
+// 		body: formData,
+// 	});
+
+// 	if (!response.ok) {
+// 		const errorData = await response.json().catch(() => ({}));
+// 		throw new Error(
+// 			`OpenAI API error: ${response.status} ${response.statusText}. ${
+// 				errorData.error?.message || ""
+// 			}`,
+// 		);
+// 	}
+
+// 	const result = await response.json();
+
+// 	if (!result.text) {
+// 		throw new Error("No transcription text received from OpenAI API");
+// 	}
+
+// 	return result.text;
+// }
 
 export const generateTranscript = action({
 	args: {
@@ -82,8 +134,9 @@ export const generateTranscript = action({
 				throw new Error("Audio file not found in storage");
 			}
 
-			// Transcribe audio using OpenAI Whisper API
-			const transcript = await transcribeAudioWithWhisper(audioUrl);
+			// Transcribe audio using Groq Whisper API (using Groq for testing since it's free)
+			// To switch back to OpenAI, uncomment transcribeAudioWithWhisper and comment transcribeAudioWithGroq
+			const transcript = await transcribeAudioWithGroq(audioUrl);
 
 			await ctx.runMutation(internal.transcript.updateTranscript, {
 				documentId: args.documentId,
