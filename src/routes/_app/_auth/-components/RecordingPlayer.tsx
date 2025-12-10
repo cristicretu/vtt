@@ -322,9 +322,7 @@ function RecordingPlayerInternal({ className }: RecordingPlayerProps) {
 			// Check if user is typing in an input field
 			const target = e.target as HTMLElement;
 			const isInputField =
-				target.tagName === "INPUT" ||
-				target.tagName === "TEXTAREA" ||
-				target.isContentEditable;
+				target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
 
 			// Spacebar: play/pause (but not when typing in input fields)
 			if (e.key === " " && !isInputField) {

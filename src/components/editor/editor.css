@@ -1,0 +1,210 @@
+.tiptap-editor {
+	@apply rounded-lg shadow-xl mx-auto;
+	width: 210mm;
+	max-height: calc(100vh - 200px);
+	max-width: 100%;
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
+.tiptap-editor .ProseMirror {
+	@apply outline-none;
+	background-color: white;
+	color: #111827; /* gray-900 */
+	padding: 25mm 25mm 30mm 25mm;
+	min-height: 297mm;
+	font-family: "Times New Roman", Times, serif;
+	font-size: 12pt;
+	line-height: 1.5;
+}
+
+.dark .tiptap-editor .ProseMirror {
+	background-color: #18181b; /* zinc-900 */
+	color: #e4e4e7; /* zinc-200 */
+}
+
+.tiptap-editor .ProseMirror:focus {
+	@apply outline-none;
+}
+
+/* Headings */
+.tiptap-editor .ProseMirror h1 {
+	@apply text-2xl font-bold text-center mb-4 mt-0;
+	color: #111827;
+}
+.dark .tiptap-editor .ProseMirror h1 {
+	color: #f4f4f5; /* zinc-100 */
+}
+
+.tiptap-editor .ProseMirror h2 {
+	@apply text-lg font-bold mb-2 mt-6 uppercase;
+	color: #1f2937; /* gray-800 */
+	border-bottom: 1px solid #e5e7eb;
+	padding-bottom: 4px;
+}
+.dark .tiptap-editor .ProseMirror h2 {
+	color: #e4e4e7; /* zinc-200 */
+	border-bottom-color: #3f3f46; /* zinc-700 */
+}
+
+.tiptap-editor .ProseMirror h3 {
+	@apply text-base font-semibold mb-2 mt-4;
+	color: #1f2937;
+}
+.dark .tiptap-editor .ProseMirror h3 {
+	color: #d4d4d8; /* zinc-300 */
+}
+
+/* Paragraphs */
+.tiptap-editor .ProseMirror p {
+	@apply mb-2;
+}
+
+.tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
+	color: #9ca3af; /* gray-400 */
+	content: attr(data-placeholder);
+	float: left;
+	height: 0;
+	pointer-events: none;
+}
+.dark .tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
+	color: #71717a; /* zinc-500 */
+}
+
+/* Strong */
+.tiptap-editor .ProseMirror strong {
+	@apply font-bold;
+	color: #111827;
+}
+.dark .tiptap-editor .ProseMirror strong {
+	color: #ffffff;
+}
+
+/* Lists */
+.tiptap-editor .ProseMirror ul,
+.tiptap-editor .ProseMirror ol {
+	@apply pl-6 mb-2;
+}
+
+.tiptap-editor .ProseMirror ul {
+	list-style-type: disc;
+}
+
+.tiptap-editor .ProseMirror ol {
+	list-style-type: decimal;
+}
+
+.tiptap-editor .ProseMirror li {
+	@apply mb-1;
+}
+
+.tiptap-editor .ProseMirror li p {
+	@apply mb-0;
+}
+
+.tiptap-editor .ProseMirror ul li::marker,
+.tiptap-editor .ProseMirror ol li::marker {
+	color: #4b5563; /* gray-600 */
+}
+.dark .tiptap-editor .ProseMirror ul li::marker,
+.dark .tiptap-editor .ProseMirror ol li::marker {
+	color: #a1a1aa; /* zinc-400 */
+}
+
+/* Tables */
+.tiptap-editor .ProseMirror table {
+	@apply w-full border-collapse mb-4;
+}
+
+.tiptap-editor .ProseMirror th,
+.tiptap-editor .ProseMirror td {
+	@apply p-2 text-left;
+	border: 1px solid #d1d5db; /* gray-300 */
+	color: #111827;
+	background-color: white;
+}
+.dark .tiptap-editor .ProseMirror th,
+.dark .tiptap-editor .ProseMirror td {
+	border-color: #52525b; /* zinc-600 */
+	color: #e4e4e7;
+	background-color: #18181b; /* zinc-900 */
+}
+
+.tiptap-editor .ProseMirror th {
+	@apply font-semibold;
+	background-color: #f3f4f6; /* gray-100 */
+}
+.dark .tiptap-editor .ProseMirror th {
+	background-color: #27272a; /* zinc-800 */
+}
+
+.tiptap-editor .ProseMirror tr:nth-child(even) td {
+	background-color: #f9fafb; /* gray-50 */
+}
+.dark .tiptap-editor .ProseMirror tr:nth-child(even) td {
+	background-color: #27272a; /* zinc-800 */
+}
+
+/* Selection */
+.tiptap-editor .ProseMirror ::selection {
+	background-color: rgba(59, 130, 246, 0.3); /* blue-500/30 */
+}
+.dark .tiptap-editor .ProseMirror ::selection {
+	background-color: rgba(96, 165, 250, 0.3); /* blue-400/30 */
+}
+
+.editor-content-wrapper {
+	@apply overflow-y-auto flex-1;
+	max-height: calc(100vh - 260px);
+}
+
+.editor-toolbar {
+	@apply flex flex-wrap items-center gap-1 p-2 border-b border-border bg-muted/80 dark:bg-zinc-800 rounded-t-lg sticky top-0 z-10 backdrop-blur-sm;
+}
+
+.editor-toolbar-group {
+	@apply flex items-center gap-0.5;
+}
+
+.editor-toolbar-divider {
+	@apply w-px h-6 bg-border mx-1;
+}
+
+.editor-toolbar button {
+	@apply h-8 w-8 flex items-center justify-center rounded hover:bg-accent hover:text-accent-foreground transition-colors;
+}
+
+.editor-toolbar button.is-active {
+	@apply bg-accent text-accent-foreground;
+}
+
+.editor-toolbar button:disabled {
+	@apply opacity-50 cursor-not-allowed;
+}
+
+@media print {
+	.editor-toolbar,
+	.editor-header,
+	.editor-status {
+		display: none !important;
+	}
+
+	.tiptap-editor {
+		@apply shadow-none border-none rounded-none bg-white;
+		height: auto;
+		max-height: none;
+		overflow: visible;
+	}
+
+	.tiptap-editor .ProseMirror {
+		@apply p-0 text-black;
+	}
+
+	.tiptap-editor .ProseMirror h1,
+	.tiptap-editor .ProseMirror h2,
+	.tiptap-editor .ProseMirror h3,
+	.tiptap-editor .ProseMirror p,
+	.tiptap-editor .ProseMirror li {
+		@apply text-black;
+	}
+}
