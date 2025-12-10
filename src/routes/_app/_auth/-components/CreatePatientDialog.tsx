@@ -173,4 +173,3 @@ export function CreatePatientDialog({ open, onOpenChange }: CreatePatientDialogP
 		</Dialog>
 	);
 }
-
