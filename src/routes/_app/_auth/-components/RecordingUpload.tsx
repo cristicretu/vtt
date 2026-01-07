@@ -115,10 +115,10 @@ export function RecordingUpload({ patientId }: RecordingUploadProps) {
 	};
 
 	return (
-		<div className="space-y-4">
+		<div className="flex flex-col flex-1 h-full space-y-4">
 			<div
 				{...getRootProps()}
-				className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 text-center ${
+				className={`flex flex-1 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 text-center ${
 					isDragActive ? "border-primary" : "border-muted"
 				}`}
 			>

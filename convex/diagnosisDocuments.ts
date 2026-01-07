@@ -14,6 +14,7 @@ export const createDiagnosisDocument = mutation({
 			originalFilename: v.string(),
 			mimeType: v.string(),
 			fileSize: v.number(),
+			duration: v.optional(v.number()),
 		}),
 	},
 	handler: async (ctx, args) => {
@@ -42,6 +43,7 @@ export const createDiagnosisDocument = mutation({
 				fileSize: args.metadata.fileSize,
 				mimeType: args.metadata.mimeType,
 				format: args.metadata.mimeType,
+				duration: args.metadata.duration,
 			},
 			dateCreated: Date.now(),
 			dateLastModified: Date.now(),

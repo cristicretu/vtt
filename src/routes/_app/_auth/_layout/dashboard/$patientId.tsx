@@ -32,7 +32,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { EditPatientDialog } from "@/routes/_app/_auth/-components/EditPatientDialog";
-import { RecordingUpload } from "@/routes/_app/_auth/-components/RecordingUpload";
+import { AudioInputPanel } from "@/routes/_app/_auth/-components/AudioInputPanel";
 import { loadRecording } from "@/routes/_app/_auth/-components/RecordingPlayer";
 import { generateMedicalDocx } from "@/lib/docx-generator";
 import { api } from "~/convex/_generated/api";
@@ -369,16 +369,16 @@ function PatientPage() {
 						</CardContent>
 					</Card>
 
-					{/* Upload Recording */}
+					{/* Add Recording */}
 					<Card>
 						<CardHeader>
-							<CardTitle>Upload Recording</CardTitle>
+							<CardTitle>Add Recording</CardTitle>
 							<CardDescription>
-								Upload an audio recording for this patient's consultation
+								Upload an audio file or record directly in the app
 							</CardDescription>
 						</CardHeader>
 						<CardContent>
-							<RecordingUpload patientId={patientId as Id<"patients">} />
+							<AudioInputPanel patientId={patientId as Id<"patients">} />
 						</CardContent>
 					</Card>
 
